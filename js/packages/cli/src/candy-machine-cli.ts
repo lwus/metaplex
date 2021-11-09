@@ -645,7 +645,10 @@ programCommand('update_candy_machine')
     const cacheContent = loadCache(cacheName, env);
 
     const secondsSinceEpoch = date ? parseDate(date) : null;
-    const lamports = price ? parsePrice(price) : null;
+    const lamports = parsePrice(price);
+    if (isNaN(lamports) && price !== undefined) {
+      return log.error(`update_candy_machine could not parse price: ${price}`);
+    }
     const newAuthorityKey = newAuthority ? new PublicKey(newAuthority) : null;
 
     const walletKeyPair = loadWalletKey(keypair);
@@ -653,9 +656,9 @@ programCommand('update_candy_machine')
 
     const candyMachine = new PublicKey(cacheContent.candyMachineAddress);
 
-    if (lamports || secondsSinceEpoch) {
+    if (!isNaN(lamports) || secondsSinceEpoch) {
       const tx = await anchorProgram.rpc.updateCandyMachine(
-        lamports ? new anchor.BN(lamports) : null,
+        !isNaN(lamports) ? new anchor.BN(lamports) : null,
         secondsSinceEpoch ? new anchor.BN(secondsSinceEpoch) : null,
         {
           accounts: {
@@ -670,7 +673,7 @@ programCommand('update_candy_machine')
         log.info(
           ` - updated startDate timestamp: ${secondsSinceEpoch} (${date})`,
         );
-      if (lamports)
+      if (!isNaN(lamports))
         log.info(` - updated price: ${lamports} lamports (${price} SOL)`);
       log.info('update_candy_machine finished', tx);
     }
