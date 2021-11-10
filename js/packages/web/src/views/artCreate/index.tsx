@@ -14,7 +14,9 @@ import {
   Typography,
   Space,
   Card,
+  Tooltip,
 } from 'antd';
+import { RightOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { ArtCard } from './../../components/ArtCard';
 import { UserSearch, UserValue } from './../../components/UserSearch';
 import { Confetti } from './../../components/Confetti';
@@ -697,7 +699,25 @@ const InfoStep = (props: {
             />
           </label>
           <label className="action-field">
-            <span className="field-title">Maximum Supply</span>
+            <span className="field-title">
+              Maximum Supply{"\u00A0"}
+              <Tooltip
+                overlayInnerStyle={{ fontSize: 13 }}
+                // width of section minimum
+                overlayStyle={{ maxWidth: 300 }}
+                title={(
+                  <>
+                    Sets the maximum number of new editions that be printed from this master edition. e.g.,
+                    <br />
+                    <RightOutlined /> Leave empty to allow unlimited prints
+                    <br />
+                    <RightOutlined /> Set to 0 to disallow prints completely
+                  </>
+                )}
+              >
+                <QuestionCircleOutlined />
+              </Tooltip>
+            </span>
             <InputNumber
               placeholder="Quantity"
               onChange={(val: number) => {

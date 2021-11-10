@@ -282,7 +282,7 @@ export const mintNFT = async (
     // // In this instruction, mint authority will be removed from the main mint, while
     // // minting authority will be maintained for the Printing mint (which we want.)
     await createMasterEdition(
-      maxSupply !== undefined ? new BN(maxSupply) : undefined,
+      maxSupply !== undefined && maxSupply !== null ? new BN(maxSupply) : undefined,
       mintKey,
       payerPublicKey,
       payerPublicKey,
