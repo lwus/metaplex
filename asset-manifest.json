@@ -1,0 +1,27 @@
+{
+  "files": {
+    "main.css": "/gumdrop/static/css/main.dae76bef.chunk.css",
+    "main.js": "/gumdrop/static/js/main.535b53cc.chunk.js",
+    "main.js.map": "/gumdrop/static/js/main.535b53cc.chunk.js.map",
+    "runtime-main.js": "/gumdrop/static/js/runtime-main.8324713c.js",
+    "runtime-main.js.map": "/gumdrop/static/js/runtime-main.8324713c.js.map",
+    "static/css/2.1cba035d.chunk.css": "/gumdrop/static/css/2.1cba035d.chunk.css",
+    "static/js/2.34bfd948.chunk.js": "/gumdrop/static/js/2.34bfd948.chunk.js",
+    "static/js/2.34bfd948.chunk.js.map": "/gumdrop/static/js/2.34bfd948.chunk.js.map",
+    "static/js/3.5b0f4bf9.chunk.js": "/gumdrop/static/js/3.5b0f4bf9.chunk.js",
+    "static/js/3.5b0f4bf9.chunk.js.map": "/gumdrop/static/js/3.5b0f4bf9.chunk.js.map",
+    "index.html": "/gumdrop/index.html",
+    "static/css/2.1cba035d.chunk.css.map": "/gumdrop/static/css/2.1cba035d.chunk.css.map",
+    "static/css/main.dae76bef.chunk.css.map": "/gumdrop/static/css/main.dae76bef.chunk.css.map",
+    "static/js/2.34bfd948.chunk.js.LICENSE.txt": "/gumdrop/static/js/2.34bfd948.chunk.js.LICENSE.txt",
+    "static/media/index.css": "/gumdrop/static/media/sora-latin-ext-400-normal.b6e3517b.woff2",
+    "static/media/wallet.c746d144.less": "/gumdrop/static/media/wallet.c746d144.less"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.8324713c.js",
+    "static/css/2.1cba035d.chunk.css",
+    "static/js/2.34bfd948.chunk.js",
+    "static/css/main.dae76bef.chunk.css",
+    "static/js/main.535b53cc.chunk.js"
+  ]
+}
