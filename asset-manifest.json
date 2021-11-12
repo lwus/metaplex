@@ -1,27 +1,27 @@
 {
   "files": {
-    "main.css": "/metaplex/gumdrop/static/css/main.dae76bef.chunk.css",
-    "main.js": "/metaplex/gumdrop/static/js/main.8eb40de3.chunk.js",
-    "main.js.map": "/metaplex/gumdrop/static/js/main.8eb40de3.chunk.js.map",
-    "runtime-main.js": "/metaplex/gumdrop/static/js/runtime-main.0421df84.js",
-    "runtime-main.js.map": "/metaplex/gumdrop/static/js/runtime-main.0421df84.js.map",
-    "static/css/2.5414b86c.chunk.css": "/metaplex/gumdrop/static/css/2.5414b86c.chunk.css",
-    "static/js/2.166e7afc.chunk.js": "/metaplex/gumdrop/static/js/2.166e7afc.chunk.js",
-    "static/js/2.166e7afc.chunk.js.map": "/metaplex/gumdrop/static/js/2.166e7afc.chunk.js.map",
-    "static/js/3.5b0f4bf9.chunk.js": "/metaplex/gumdrop/static/js/3.5b0f4bf9.chunk.js",
-    "static/js/3.5b0f4bf9.chunk.js.map": "/metaplex/gumdrop/static/js/3.5b0f4bf9.chunk.js.map",
-    "index.html": "/metaplex/gumdrop/index.html",
-    "static/css/2.5414b86c.chunk.css.map": "/metaplex/gumdrop/static/css/2.5414b86c.chunk.css.map",
-    "static/css/main.dae76bef.chunk.css.map": "/metaplex/gumdrop/static/css/main.dae76bef.chunk.css.map",
-    "static/js/2.166e7afc.chunk.js.LICENSE.txt": "/metaplex/gumdrop/static/js/2.166e7afc.chunk.js.LICENSE.txt",
-    "static/media/index.css": "/metaplex/gumdrop/static/media/sora-latin-ext-400-normal.b6e3517b.woff2",
-    "static/media/wallet.c746d144.less": "/metaplex/gumdrop/static/media/wallet.c746d144.less"
+    "main.css": "/metaplex/static/css/main.dae76bef.chunk.css",
+    "main.js": "/metaplex/static/js/main.9d9fc209.chunk.js",
+    "main.js.map": "/metaplex/static/js/main.9d9fc209.chunk.js.map",
+    "runtime-main.js": "/metaplex/static/js/runtime-main.a7e09c13.js",
+    "runtime-main.js.map": "/metaplex/static/js/runtime-main.a7e09c13.js.map",
+    "static/css/2.fb71e45d.chunk.css": "/metaplex/static/css/2.fb71e45d.chunk.css",
+    "static/js/2.1867a5e1.chunk.js": "/metaplex/static/js/2.1867a5e1.chunk.js",
+    "static/js/2.1867a5e1.chunk.js.map": "/metaplex/static/js/2.1867a5e1.chunk.js.map",
+    "static/js/3.5b0f4bf9.chunk.js": "/metaplex/static/js/3.5b0f4bf9.chunk.js",
+    "static/js/3.5b0f4bf9.chunk.js.map": "/metaplex/static/js/3.5b0f4bf9.chunk.js.map",
+    "index.html": "/metaplex/index.html",
+    "static/css/2.fb71e45d.chunk.css.map": "/metaplex/static/css/2.fb71e45d.chunk.css.map",
+    "static/css/main.dae76bef.chunk.css.map": "/metaplex/static/css/main.dae76bef.chunk.css.map",
+    "static/js/2.1867a5e1.chunk.js.LICENSE.txt": "/metaplex/static/js/2.1867a5e1.chunk.js.LICENSE.txt",
+    "static/media/index.css": "/metaplex/static/media/sora-latin-ext-400-normal.b6e3517b.woff2",
+    "static/media/wallet.c746d144.less": "/metaplex/static/media/wallet.c746d144.less"
   },
   "entrypoints": [
-    "static/js/runtime-main.0421df84.js",
-    "static/css/2.5414b86c.chunk.css",
-    "static/js/2.166e7afc.chunk.js",
+    "static/js/runtime-main.a7e09c13.js",
+    "static/css/2.fb71e45d.chunk.css",
+    "static/js/2.1867a5e1.chunk.js",
     "static/css/main.dae76bef.chunk.css",
-    "static/js/main.8eb40de3.chunk.js"
+    "static/js/main.9d9fc209.chunk.js"
   ]
 }
