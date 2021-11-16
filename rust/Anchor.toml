@@ -9,6 +9,7 @@ wallet = "~/.config/solana/id.json"
 nft_candy_machine = "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
 fair_launch = "faircnAB9k59Y4TXmLabBULeuTLgV7TkGMGNkjnA15j"
 gumdrop = "gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a"
+asyncart = "Ax22eZWmvg77HAE5eWbvhdzZYLPmv6C8TV28ivasjB5L"
 
 [scripts]
 test = "ts-mocha -p ./tsconfig.json -t 1000000 test/*.ts"
