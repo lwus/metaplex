@@ -458,14 +458,19 @@ pub struct CreateMaster<'info> {
     )]
     pub master: Account<'info, Master>,
 
+    #[account(mut)]
     pub mint: AccountInfo<'info>,
 
+    #[account(mut)]
     pub metadata: AccountInfo<'info>,
 
+    #[account(mut)]
     pub master_edition: AccountInfo<'info>,
 
+    #[account(mut)]
     pub payer: Signer<'info>,
 
+    #[account(mut)]
     pub payer_ata: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
@@ -496,14 +501,19 @@ pub struct CreateLayer<'info> {
     )]
     pub layer: Account<'info, Layer>,
 
+    #[account(mut)]
     pub mint: AccountInfo<'info>,
 
+    #[account(mut)]
     pub metadata: AccountInfo<'info>,
 
+    #[account(mut)]
     pub master_edition: AccountInfo<'info>,
 
+    #[account(mut)]
     pub payer: Signer<'info>,
 
+    #[account(mut)]
     pub payer_ata: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
@@ -524,14 +534,19 @@ pub struct CreateImage<'info> {
     // TODO: do we need this?
     pub layer: AccountInfo<'info>,
 
+    #[account(mut)]
     pub mint: AccountInfo<'info>,
 
+    #[account(mut)]
     pub metadata: AccountInfo<'info>,
 
+    #[account(mut)]
     pub master_edition: AccountInfo<'info>,
 
+    #[account(mut)]
     pub payer: Signer<'info>,
 
+    #[account(mut)]
     pub payer_ata: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,

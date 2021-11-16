@@ -21,6 +21,7 @@ import BN from 'bn.js';
 import {
   getMetadata,
   getMasterEdition,
+  loadAsyncArtProgram,
 } from './helpers/accounts';
 import {
   ASYNCART_PROGRAM_ID,
@@ -45,15 +46,12 @@ log.setLevel(log.levels.INFO);
 const ASYNCART_PREFIX = Buffer.from("asyncart");
 const ASYNCART_MINT = Buffer.from("mint");
 
-programCommand('create')
+programCommand('create_master')
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const connection = new anchor.web3.Connection(
-      //@ts-ignore
-      options.rpcUrl || anchor.web3.clusterApiUrl(options.env),
-    );
+    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
     const [masterKey, masterBump] = await PublicKey.findProgramAddress(
       [
@@ -88,46 +86,128 @@ programCommand('create')
     const name = "tester";
     const symbol = "test";
     const uri = "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI?ext=png";
-    const createMaster = new TransactionInstruction({
-        programId: ASYNCART_PROGRAM_ID,
-        keys: [
-            { pubkey: wallet.publicKey          , isSigner: true  , isWritable: false } ,
-            { pubkey: masterKey                 , isSigner: false , isWritable: true  } ,
-            { pubkey: mintKey                   , isSigner: false , isWritable: true  } ,
-            { pubkey: metadataKey               , isSigner: false , isWritable: true  } ,
-            { pubkey: metadataMaster            , isSigner: false , isWritable: true  } ,
-            { pubkey: wallet.publicKey          , isSigner: true  , isWritable: true  } ,
-            { pubkey: walletTokenKey            , isSigner: false , isWritable: true  } ,
-            { pubkey: SystemProgram.programId   , isSigner: false , isWritable: false } ,
-            { pubkey: TOKEN_PROGRAM_ID          , isSigner: false , isWritable: false } ,
-            {
-              pubkey: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-              isSigner: false,
-              isWritable: false,
-            },
-            { pubkey: TOKEN_METADATA_PROGRAM_ID , isSigner: false , isWritable: false } ,
-            { pubkey: SYSVAR_RENT_PUBKEY        , isSigner: false , isWritable: false } ,
-        ],
-        data: Buffer.from([
-          ...Buffer.from(sha256.digest("global:create_master")).slice(0, 8),
-          ...new BN(masterBump).toArray("le", 1),
-          ...new BN(mintBump).toArray("le", 1),
-          ...new BN(schemaURI.length).toArray("le", 4),
-          ...Buffer.from(schemaURI),
-          ...new BN(name.length).toArray("le", 4),
-          ...Buffer.from(name),
-          ...new BN(symbol.length).toArray("le", 4),
-          ...Buffer.from(symbol),
-          ...new BN(uri.length).toArray("le", 4),
-          ...Buffer.from(uri),
-          ...new BN(0).toArray("le", 2),
-        ])
-    });
+    const createMaster = await anchorProgram.instruction.createMaster(
+      masterBump,
+      mintBump,
+      schemaURI,
+      {
+        name: name,
+        symbol: symbol,
+        uri: uri,
+        sellerFeeBasisPoints: 0,
+      },
+      {
+        accounts: {
+          base: wallet.publicKey,
+          master: masterKey,
+          mint: mintKey,
+          metadata: metadataKey,
+          masterEdition: metadataMaster,
+          payer: wallet.publicKey,
+          payerAta: walletTokenKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          ataProgram: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
+        },
+        signers: [],
+      });
 
     const createResult = await sendTransactionWithRetry(
-      connection,
+      anchorProgram.provider.connection,
       wallet,
       [createMaster],
+      [],
+    );
+
+    log.info(createResult);
+  });
+
+programCommand('create_layer')
+  .option(
+    '--index <number>',
+    `Layer index`,
+  )
+  .action(async (options, cmd) => {
+    log.info(`Parsed options:`, options);
+
+    const index = Number(options.index);
+    if (isNaN(index)) {
+      throw new Error(`Unable to parse index ${options.index}`);
+    }
+
+    const wallet = loadWalletKey(options.keypair);
+    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+
+    const indexBuffer = Buffer.from(new BN(index).toArray("le", 8));
+    const [layerKey, layerBump] = await PublicKey.findProgramAddress(
+      [
+        ASYNCART_PREFIX,
+        wallet.publicKey.toBuffer(),
+        indexBuffer,
+      ],
+      ASYNCART_PROGRAM_ID
+    );
+
+    const [mintKey, mintBump] = await PublicKey.findProgramAddress(
+      [
+        ASYNCART_PREFIX,
+        wallet.publicKey.toBuffer(),
+        ASYNCART_MINT,
+        indexBuffer,
+      ],
+      ASYNCART_PROGRAM_ID
+    );
+
+    const metadataKey = await getMetadata(mintKey);
+    const metadataMaster = await getMasterEdition(mintKey);
+
+    const [walletTokenKey, ] = await PublicKey.findProgramAddress(
+      [
+        wallet.publicKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mintKey.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
+
+    const name = "testerL2";
+    const symbol = "test";
+    const uri = "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI?ext=png";
+    const createLayer = await anchorProgram.instruction.createLayer(
+      layerBump,
+      mintBump,
+      new BN(index),
+      new BN(0), // current
+      {
+        name: name,
+        symbol: symbol,
+        uri: uri,
+        sellerFeeBasisPoints: 0,
+      },
+      {
+        accounts: {
+          base: wallet.publicKey,
+          layer: layerKey,
+          mint: mintKey,
+          metadata: metadataKey,
+          masterEdition: metadataMaster,
+          payer: wallet.publicKey,
+          payerAta: walletTokenKey,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          ataProgram: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          rent: SYSVAR_RENT_PUBKEY,
+        },
+        signers: [],
+      });
+
+    const createResult = await sendTransactionWithRetry(
+      anchorProgram.provider.connection,
+      wallet,
+      [createLayer],
       [],
     );
 
