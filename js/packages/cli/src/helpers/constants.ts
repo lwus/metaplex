@@ -44,6 +44,9 @@ export const GUMDROP_DISTRIBUTOR_ID = new PublicKey(
 export const GUMDROP_TEMPORAL_SIGNER = new PublicKey(
   'MSv9H2sMceAzccBganUXwGq3GXgqYAstmZAbFDZYbAV'
 );
+export const ASYNCART_PROGRAM_ID = new PublicKey(
+  'Ax22eZWmvg77HAE5eWbvhdzZYLPmv6C8TV28ivasjB5L',
+);
 
 export const CONFIG_ARRAY_START =
   32 + // authority

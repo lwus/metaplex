@@ -11,6 +11,7 @@ use metaplex_token_metadata::{
     },
     utils::{
         create_or_allocate_account_raw,
+        puffed_out_string,
     },
 };
 
@@ -50,6 +51,7 @@ declare_id!("Ax22eZWmvg77HAE5eWbvhdzZYLPmv6C8TV28ivasjB5L");
 pub const PREFIX: &[u8] = b"asyncart";
 pub const LAYER: &[u8] = b"layer";
 pub const MINT: &[u8] = b"mint";
+pub const MAX_SCHEMA_URI_LENGTH: usize = 200; // smaller?
 
 #[program]
 pub mod asyncart {
@@ -59,7 +61,7 @@ pub mod asyncart {
         ctx: Context<CreateMaster>,
         _bump: u8,
         mint_bump: u8,
-        schema: Pubkey,
+        schema: String,
         data: Data,
     ) -> ProgramResult {
 
@@ -75,7 +77,6 @@ pub mod asyncart {
             None,
         )?;
 
-        // TODO: do outside?
         invoke(
             &create_associated_token_account(
                 &ctx.accounts.payer.key(),
@@ -83,8 +84,13 @@ pub mod asyncart {
                 &ctx.accounts.mint.key(),
             ),
             &[
+                ctx.accounts.payer_ata.to_account_info(),
                 ctx.accounts.payer.to_account_info(),
                 ctx.accounts.mint.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.ata_program.to_account_info(),
+                ctx.accounts.rent.to_account_info(),
             ],
         )?;
 
@@ -115,7 +121,7 @@ pub mod asyncart {
 
         let master = &mut ctx.accounts.master;
 
-        master.schema = schema;
+        master.schema = puffed_out_string(&schema, MAX_SCHEMA_URI_LENGTH);
 
         Ok(())
     }
@@ -141,7 +147,6 @@ pub mod asyncart {
             Some(layer_index),
         )?;
 
-        // TODO: do outside?
         invoke(
             &create_associated_token_account(
                 &ctx.accounts.payer.key(),
@@ -149,8 +154,13 @@ pub mod asyncart {
                 &ctx.accounts.mint.key(),
             ),
             &[
+                ctx.accounts.payer_ata.to_account_info(),
                 ctx.accounts.payer.to_account_info(),
                 ctx.accounts.mint.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.ata_program.to_account_info(),
+                ctx.accounts.rent.to_account_info(),
             ],
         )?;
 
@@ -219,7 +229,6 @@ pub mod asyncart {
             Some(mint_index),
         )?;
 
-        // TODO: do outside?
         invoke(
             &create_associated_token_account(
                 &ctx.accounts.payer.key(),
@@ -227,8 +236,13 @@ pub mod asyncart {
                 &ctx.accounts.mint.key(),
             ),
             &[
+                ctx.accounts.payer_ata.to_account_info(),
                 ctx.accounts.payer.to_account_info(),
                 ctx.accounts.mint.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.ata_program.to_account_info(),
+                ctx.accounts.rent.to_account_info(),
             ],
         )?;
 
@@ -256,6 +270,30 @@ pub mod asyncart {
             &ctx.accounts.rent,
             &data,
         )?;
+
+        Ok(())
+    }
+
+    pub fn update_master_schema(
+        ctx: Context<UpdateMasterSchema>,
+        bump: u8,
+        schema: String,
+    ) -> ProgramResult {
+        require!(
+            Pubkey::create_program_address(
+                &[
+                    PREFIX.as_ref(),
+                    ctx.accounts.base.key().to_bytes().as_ref(),
+                    &[bump],
+                ],
+                &ID)
+                == Ok(ctx.accounts.master.key()),
+            ErrorCode::InvalidMintPDA
+        );
+
+        let master = &mut ctx.accounts.master;
+
+        master.schema = puffed_out_string(&schema, MAX_SCHEMA_URI_LENGTH);
 
         Ok(())
     }
@@ -299,7 +337,7 @@ fn create_mint_at_pda<'info>(
     );
 
     create_or_allocate_account_raw(
-        ID,
+        token_program.key(),
         &mint.to_account_info(),
         &rent.to_account_info(),
         &system_program.to_account_info(),
@@ -412,10 +450,11 @@ pub struct CreateMaster<'info> {
         init,
         seeds = [
             PREFIX.as_ref(),
-            &base.key().to_bytes().as_ref(),
+            base.key().to_bytes().as_ref(),
         ],
         bump = bump,
         payer = payer,
+        space = 8 + 4 + MAX_SCHEMA_URI_LENGTH,
     )]
     pub master: Account<'info, Master>,
 
@@ -433,6 +472,8 @@ pub struct CreateMaster<'info> {
 
     pub token_program: Program<'info, token::Token>,
 
+    pub ata_program: AccountInfo<'info>,
+
     pub token_metadata_program: AccountInfo<'info>,
 
     pub rent: Sysvar<'info, Rent>,
@@ -447,7 +488,7 @@ pub struct CreateLayer<'info> {
         init,
         seeds = [
             PREFIX.as_ref(),
-            &base.key().to_bytes().as_ref(),
+            base.key().to_bytes().as_ref(),
             layer_index.to_le_bytes().as_ref(),
         ],
         bump = layer_bump,
@@ -468,6 +509,8 @@ pub struct CreateLayer<'info> {
     pub system_program: Program<'info, System>,
 
     pub token_program: Program<'info, token::Token>,
+
+    pub ata_program: AccountInfo<'info>,
 
     pub token_metadata_program: AccountInfo<'info>,
 
@@ -495,15 +538,34 @@ pub struct CreateImage<'info> {
 
     pub token_program: Program<'info, token::Token>,
 
+    pub ata_program: AccountInfo<'info>,
+
     pub token_metadata_program: AccountInfo<'info>,
 
     pub rent: Sysvar<'info, Rent>,
 }
 
+#[derive(Accounts)]
+#[instruction(bump: u8)]
+pub struct UpdateMasterSchema<'info> {
+    pub base: Signer<'info>,
+
+    // TODO: why can't I do this
+    // #[account(
+    //     seeds = [
+    //         PREFIX.as_ref(),
+    //         base.key().to_bytes().as_ref(),
+    //     ],
+    //     bump = bump,
+    //     mut,
+    // )]
+    pub master: Account<'info, Master>,
+}
+
 #[account]
 #[derive(Default)]
 pub struct Master {
-    pub schema: Pubkey,
+    pub schema: String,
 }
 
 #[account]
