@@ -62,6 +62,7 @@ programCommand('create_master')
         uri: "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI",
         sellerFeeBasisPoints: 0,
       },
+      wallet.publicKey,
       wallet,
       anchorProgram
     );
@@ -100,6 +101,7 @@ programCommand('create_layer')
         uri: "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI",
         sellerFeeBasisPoints: 0,
       },
+      wallet.publicKey,
       wallet,
       anchorProgram
     );

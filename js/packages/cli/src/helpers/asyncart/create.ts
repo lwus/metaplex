@@ -62,11 +62,12 @@ export const getAsyncArtMint = async (
 export const createMaster = async (
   schemaURI: string,
   data: Data,
+  base: PublicKey,
   wallet: Keypair,
   anchorProgram: anchor.Program,
 ) => {
-  const [masterKey, masterBump] = await getAsyncArtMeta(wallet.publicKey);
-  const [mintKey, mintBump] = await getAsyncArtMint(wallet.publicKey);
+  const [masterKey, masterBump] = await getAsyncArtMeta(base);
+  const [mintKey, mintBump] = await getAsyncArtMint(base);
 
   const metadataKey = await getMetadata(mintKey);
   const metadataMaster = await getMasterEdition(mintKey);
@@ -79,7 +80,7 @@ export const createMaster = async (
     data,
     {
       accounts: {
-        base: wallet.publicKey,
+        base: base,
         master: masterKey,
         mint: mintKey,
         metadata: metadataKey,
@@ -99,16 +100,15 @@ export const createMaster = async (
 export const createLayer = async (
   index: number,
   data: Data,
+  base: PublicKey,
   wallet: Keypair,
   anchorProgram: anchor.Program,
 ) => {
 
   const indexBuffer = Buffer.from(new BN(index).toArray("le", 8));
-  const [layerKey, layerBump] = await getAsyncArtMeta(
-    wallet.publicKey, indexBuffer);
+  const [layerKey, layerBump] = await getAsyncArtMeta(base, indexBuffer);
 
-  const [mintKey, mintBump] = await getAsyncArtMint(
-    wallet.publicKey, indexBuffer);
+  const [mintKey, mintBump] = await getAsyncArtMint(base, indexBuffer);
 
   const metadataKey = await getMetadata(mintKey);
   const metadataMaster = await getMasterEdition(mintKey);
@@ -123,7 +123,7 @@ export const createLayer = async (
     data,
     {
       accounts: {
-        base: wallet.publicKey,
+        base: base,
         layer: layerKey,
         mint: mintKey,
         metadata: metadataKey,
