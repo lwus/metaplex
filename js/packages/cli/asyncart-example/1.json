@@ -1,0 +1,24 @@
+{
+  "name": "1",
+  "symbol": "",
+  "image": "1.png",
+  "properties": {
+    "files": [
+      {
+        "uri": "1.png",
+        "type": "image/png"
+      }
+    ],
+    "category": "image",
+    "creators": [
+      {
+        "address": "6qaXJkyZkrcp8pSFBtqTwAuTR3nLwAdWwkhmbyBB6YFt",
+        "share": 100
+      }
+    ]
+  },
+  "description": "",
+  "seller_fee_basis_points": 500,
+  "attributes": [],
+  "collection": {}
+}

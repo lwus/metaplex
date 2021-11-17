@@ -24,14 +24,20 @@ import {
   loadAsyncArtProgram,
 } from './helpers/accounts';
 import {
+  loadCache,
+  saveCache,
+} from './helpers/cache';
+import {
   ASYNCART_PROGRAM_ID,
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  EXTENSION_PNG,
 } from './helpers/constants';
 import {
   sendSignedTransaction,
 } from './helpers/transactions';
+import { arweaveUpload } from './helpers/upload/arweave';
 import {
   createLayer,
   createMaster,
@@ -45,7 +51,157 @@ if (!fs.existsSync(LOG_PATH)) {
   fs.mkdirSync(LOG_PATH);
 }
 
-log.setLevel(log.levels.INFO);
+log.setLevel(log.levels.DEBUG);
+
+programCommand('upload')
+  .option(
+    '--file <number>',
+    `File specification`,
+  )
+  .option(
+    '--schema-image <filename>',
+    `Image tied to the uploaded schema file`,
+  )
+  .action(async (options, cmd) => {
+    log.info(`Parsed options:`, options);
+
+    const schema = JSON.parse(fs.readFileSync(options.file).toString());
+
+    let files : Array<string> = [];
+    files.push(schema.uri);
+    for (const layer of schema.layers) {
+      files.push(layer.uri);
+      for (const image of layer.images) {
+        files.push(image.uri);
+      }
+    }
+    files = files.map(f => path.join(path.dirname(options.file), f));
+
+    const wallet = loadWalletKey(options.keypair);
+    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+
+    const cacheName = 'asyncart';
+
+    const savedContent = loadCache(cacheName, options.env);
+    const cacheContent = savedContent || {};
+
+    let existingInCache = [];
+    if (!cacheContent.items) {
+      cacheContent.items = {};
+    } else {
+      existingInCache = Object.keys(cacheContent.items);
+    }
+
+    const seen = {};
+    const newFiles = [];
+
+    files.forEach(f => {
+      if (!seen[f.replace(EXTENSION_PNG, '').split('/').pop()]) {
+        seen[f.replace(EXTENSION_PNG, '').split('/').pop()] = true;
+        newFiles.push(f);
+      }
+    });
+    existingInCache.forEach(f => {
+      if (!seen[f]) {
+        seen[f] = true;
+        newFiles.push(f + '.png');
+      }
+    });
+
+    const images = newFiles.filter(val => path.extname(val) === EXTENSION_PNG);
+    const SIZE = images.length;
+
+    for (let i = 0; i < SIZE; i++) {
+      const image = images[i];
+      const imageName = path.basename(image);
+      const index = imageName.replace(EXTENSION_PNG, '');
+
+      if (i % 50 === 0) {
+        log.info(`Processing file: ${i}`);
+      } else {
+        log.debug(`Processing file: ${i}`);
+      }
+
+      let link = cacheContent?.items?.[index]?.link;
+      if (!link) {
+        const manifestPath = image.replace(EXTENSION_PNG, '.json');
+        const manifestContent = fs
+          .readFileSync(manifestPath)
+          .toString()
+          .replace(imageName, 'image.png')
+          .replace(imageName, 'image.png');
+        const manifest = JSON.parse(manifestContent);
+
+        const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+
+        try {
+          link = await arweaveUpload(
+            wallet,
+            anchorProgram,
+            options.env,
+            image,
+            manifestBuffer,
+            manifest,
+            index,
+          );
+
+          if (link) {
+            log.debug('setting cache for ', index);
+            cacheContent.items[index] = {
+              link,
+              name: manifest.name,
+              onChain: false,
+            };
+            saveCache(cacheName, options.env, cacheContent);
+          }
+        } catch (er) {
+          log.error(`Error uploading file ${index}`, er);
+        }
+      }
+    }
+
+    if (!cacheContent.schema?.link) {
+      try {
+        const storedSchema = buildStoredSchema(schema, cacheContent);
+        const storedBuffer = Buffer.from(JSON.stringify(storedSchema));
+        storedSchema.name = 'schema'; // for logging...
+        // lol create a temporary empty file to stand-in for the 'image'
+        const empty = Keypair.generate().publicKey.toBase58();
+        fs.writeFileSync(empty, '');
+        const schemaLink = await arweaveUpload(
+          wallet,
+          anchorProgram,
+          options.env,
+          empty,
+          storedBuffer,
+          storedSchema,
+          'schema',
+        );
+
+        if (schemaLink) {
+          log.debug('setting cache for schema');
+          cacheContent.schema = {
+            link: schemaLink,
+          };
+          saveCache(cacheName, options.env, cacheContent);
+        }
+      } catch (er) {
+        log.error(`Error uploading schema`, er);
+      }
+    }
+  });
+
+// NB: assumes already uploaded
+programCommand('create')
+  .option(
+    '--file <number>',
+    `File specification`,
+  )
+  .action(async (options, cmd) => {
+    log.info(`Parsed options:`, options);
+
+    const schema = JSON.parse(fs.readFileSync(options.file).toString());
+  });
 
 programCommand('create_master')
   .action(async (options, cmd) => {
@@ -181,6 +337,21 @@ async function sendTransactionWithRetry(
     connection,
     signedTransaction: transaction,
   });
+}
+
+function buildStoredSchema(
+  schema: any,
+  cache: any,
+) {
+  const ret = JSON.parse(JSON.stringify(schema));
+  ret.uri = cache.items[ret.uri.replace(EXTENSION_PNG, '')].link;
+  for (const layer of ret.layers) {
+    layer.uri = cache.items[layer.uri.replace(EXTENSION_PNG, '')].link;
+    for (const image of layer.images) {
+      image.uri = cache.items[image.uri.replace(EXTENSION_PNG, '')].link;
+    }
+  }
+  return ret;
 }
 
 program.parse(process.argv);
