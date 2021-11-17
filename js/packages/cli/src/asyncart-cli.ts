@@ -32,6 +32,10 @@ import {
 import {
   sendSignedTransaction,
 } from './helpers/transactions';
+import {
+  createLayer,
+  createMaster,
+} from './helpers/asyncart/create';
 
 program.version('0.0.1');
 
@@ -43,9 +47,6 @@ if (!fs.existsSync(LOG_PATH)) {
 
 log.setLevel(log.levels.INFO);
 
-const ASYNCART_PREFIX = Buffer.from("asyncart");
-const ASYNCART_MINT = Buffer.from("mint");
-
 programCommand('create_master')
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
@@ -53,71 +54,22 @@ programCommand('create_master')
     const wallet = loadWalletKey(options.keypair);
     const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
-    const [masterKey, masterBump] = await PublicKey.findProgramAddress(
-      [
-        ASYNCART_PREFIX,
-        wallet.publicKey.toBuffer(),
-      ],
-      ASYNCART_PROGRAM_ID
-    );
-
-    const [mintKey, mintBump] = await PublicKey.findProgramAddress(
-      [
-        ASYNCART_PREFIX,
-        wallet.publicKey.toBuffer(),
-        ASYNCART_MINT,
-      ],
-      ASYNCART_PROGRAM_ID
-    );
-
-    const metadataKey = await getMetadata(mintKey);
-    const metadataMaster = await getMasterEdition(mintKey);
-
-    const [walletTokenKey, ] = await PublicKey.findProgramAddress(
-      [
-        wallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        mintKey.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
-
-    const schemaURI = "https://arweave.net/rZjs-LbK1eRMl3UkQjKbThQz95jJo8H1HYBMlHuRb4A";
-    const name = "tester";
-    const symbol = "test";
-    const uri = "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI?ext=png";
-    const createMaster = await anchorProgram.instruction.createMaster(
-      masterBump,
-      mintBump,
-      schemaURI,
+    const instr = await createMaster(
+      "https://arweave.net/rZjs-LbK1eRMl3UkQjKbThQz95jJo8H1HYBMlHuRb4A",
       {
-        name: name,
-        symbol: symbol,
-        uri: uri,
+        name: "tester",
+        symbol: "test",
+        uri: "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI",
         sellerFeeBasisPoints: 0,
       },
-      {
-        accounts: {
-          base: wallet.publicKey,
-          master: masterKey,
-          mint: mintKey,
-          metadata: metadataKey,
-          masterEdition: metadataMaster,
-          payer: wallet.publicKey,
-          payerAta: walletTokenKey,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          ataProgram: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-          rent: SYSVAR_RENT_PUBKEY,
-        },
-        signers: [],
-      });
+      wallet,
+      anchorProgram
+    );
 
     const createResult = await sendTransactionWithRetry(
       anchorProgram.provider.connection,
       wallet,
-      [createMaster],
+      [instr],
       [],
     );
 
@@ -140,74 +92,22 @@ programCommand('create_layer')
     const wallet = loadWalletKey(options.keypair);
     const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
-    const indexBuffer = Buffer.from(new BN(index).toArray("le", 8));
-    const [layerKey, layerBump] = await PublicKey.findProgramAddress(
-      [
-        ASYNCART_PREFIX,
-        wallet.publicKey.toBuffer(),
-        indexBuffer,
-      ],
-      ASYNCART_PROGRAM_ID
-    );
-
-    const [mintKey, mintBump] = await PublicKey.findProgramAddress(
-      [
-        ASYNCART_PREFIX,
-        wallet.publicKey.toBuffer(),
-        ASYNCART_MINT,
-        indexBuffer,
-      ],
-      ASYNCART_PROGRAM_ID
-    );
-
-    const metadataKey = await getMetadata(mintKey);
-    const metadataMaster = await getMasterEdition(mintKey);
-
-    const [walletTokenKey, ] = await PublicKey.findProgramAddress(
-      [
-        wallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        mintKey.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
-
-    const name = "testerL2";
-    const symbol = "test";
-    const uri = "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI?ext=png";
-    const createLayer = await anchorProgram.instruction.createLayer(
-      layerBump,
-      mintBump,
-      new BN(index),
-      new BN(0), // current
+    const instr = await createLayer(
+      index,
       {
-        name: name,
-        symbol: symbol,
-        uri: uri,
+        name: "testerL2",
+        symbol: "test",
+        uri: "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI",
         sellerFeeBasisPoints: 0,
       },
-      {
-        accounts: {
-          base: wallet.publicKey,
-          layer: layerKey,
-          mint: mintKey,
-          metadata: metadataKey,
-          masterEdition: metadataMaster,
-          payer: wallet.publicKey,
-          payerAta: walletTokenKey,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          ataProgram: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-          rent: SYSVAR_RENT_PUBKEY,
-        },
-        signers: [],
-      });
+      wallet,
+      anchorProgram
+    );
 
     const createResult = await sendTransactionWithRetry(
       anchorProgram.provider.connection,
       wallet,
-      [createLayer],
+      [instr],
       [],
     );
 
