@@ -148,7 +148,6 @@ programCommand('upload')
             cacheContent.items[index] = {
               link,
               name: manifest.name,
-              onChain: false,
             };
             saveCache(options.cacheName, options.env, cacheContent);
           }
@@ -194,7 +193,119 @@ programCommand('create')
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
 
+    const wallet = loadWalletKey(options.keypair);
+    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+
+    const create = async (instr : TransactionInstruction) => {
+      const createResult = await sendTransactionWithRetry(
+        anchorProgram.provider.connection,
+        wallet,
+        [instr],
+        [],
+      );
+
+      log.info(createResult);
+    };
+
+    // TODO: this is somewhat RPC heavy... use local cache?
+    const onChain = async (address : PublicKey) => {
+      return await anchorProgram.provider.connection.getAccountInfo(address) !== null;
+    }
+
+    const base = wallet.publicKey;
+
     const cacheContent = loadCache(options.cacheName, options.env);
+
+    if (!cacheContent?.schema?.link) {
+      throw new Error("No schema uploaded yet");
+    }
+
+    const byLink = {};
+    for (const idx of Object.keys(cacheContent.items)) {
+      byLink[cacheContent.items[idx].link] = idx; // TODO: OG URI?
+    }
+
+    const schema = await (await fetch(cacheContent.schema.link)).json();
+
+    const masterURI = schema.uri;
+    if (!(masterURI in byLink)) {
+      throw new Error(`Could not find URI ${masterURI} in cached state`);
+    }
+
+    if (!await onChain(await getAsyncArtMeta(base)[0])) {
+      const masterMetadata = await (await fetch(schema.uri)).json();
+      const instr = await createMaster(
+        cacheContent.schema.link,
+        {
+          name: masterMetadata.name,
+          symbol: masterMetadata.symbol,
+          uri: masterURI,
+          sellerFeeBasisPoints: masterMetadata.seller_fee_basis_points,
+        },
+        base,
+        wallet,
+        anchorProgram
+      );
+
+      await create(instr);
+    }
+
+    for (let layerIndex = 0; layerIndex < schema.layers.length; ++layerIndex) {
+      const layer = schema.layers[layerIndex];
+      if (!(layer.uri in byLink)) {
+        throw new Error(`Could not find URI ${layer.uri} in cached state`);
+      }
+
+      const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
+      const [layerKey, ] = await getAsyncArtMeta(base, layerIndexBuffer);
+      if (!await onChain(layerKey)) {
+        const layerMetadata = await (await fetch(layer.uri)).json();
+        const instr = await createLayer(
+          layerIndex,
+          {
+            name: layerMetadata.name,
+            symbol: layerMetadata.symbol,
+            uri: layer.uri,
+            sellerFeeBasisPoints: layerMetadata.seller_fee_basis_points,
+          },
+          base,
+          wallet,
+          anchorProgram
+        );
+
+        await create(instr);
+      }
+
+      for (let imageIndex = 0; imageIndex < layer.images.length; ++imageIndex) {
+        const image = layer.images[imageIndex];
+
+        if (!(image.uri in byLink)) {
+          throw new Error(`Could not find URI ${image.uri} in cached state`);
+        }
+
+        // TODO: a bit inconsistent that we use the mint here but no direct
+        // metadata for the image
+        const imageIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
+        if (!await onChain(await getAsyncArtMint(layerKey, imageIndexBuffer))) {
+          const imageMetadata = await (await fetch(image.uri)).json();
+          const instr = await createImage(
+            layerIndex,
+            imageIndex,
+            {
+              name: imageMetadata.name,
+              symbol: imageMetadata.symbol,
+              uri: image.uri,
+              sellerFeeBasisPoints: imageMetadata.seller_fee_basis_points,
+            },
+            base,
+            wallet,
+            anchorProgram
+          );
+
+          await create(instr);
+        }
+      }
+    }
   });
 
 programCommand('create_master')

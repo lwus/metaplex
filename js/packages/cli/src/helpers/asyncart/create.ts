@@ -140,4 +140,47 @@ export const createLayer = async (
     });
 };
 
+export const createImage = async (
+  layerIndex: number,
+  imageIndex: number,
+  data: Data,
+  base: PublicKey,
+  wallet: Keypair,
+  anchorProgram: anchor.Program,
+) => {
 
+  const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
+  const [layerKey, layerBump] = await getAsyncArtMeta(base, layerIndexBuffer);
+
+  const imageIndexBuffer = Buffer.from(new BN(imageIndex).toArray("le", 8));
+  const [mintKey, mintBump] = await getAsyncArtMint(layerKey, imageIndexBuffer);
+
+  const metadataKey = await getMetadata(mintKey);
+  const metadataMaster = await getMasterEdition(mintKey);
+
+  const walletTokenKey = await getTokenWallet(wallet.publicKey, mintKey);
+
+  return await anchorProgram.instruction.createLayer(
+    layerBump,
+    new BN(layerIndex),
+    mintBump,
+    new BN(imageIndex),
+    data,
+    {
+      accounts: {
+        base: base,
+        layer: layerKey,
+        mint: mintKey,
+        metadata: metadataKey,
+        masterEdition: metadataMaster,
+        payer: wallet.publicKey,
+        payerAta: walletTokenKey,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        ataProgram: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+      },
+      signers: [],
+    });
+};
