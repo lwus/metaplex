@@ -184,3 +184,70 @@ export const createImage = async (
       signers: [],
     });
 };
+
+export const createImage = async (
+  base: PublicKey,
+  anchorProgram: anchor.Program,
+) => {
+  const [masterKey, ] = await getAsyncArtMeta(base);
+
+  const masterMetadata = await anchorProgram.provider.getAccountInfo(masterKey);
+  if (masterMetadata === none) {
+    // mostly a sanity check...
+    throw new Error(`Could not fetch master metadata for ${base.toBase58()}`);
+  }
+
+  let layerIndex = 0;
+  const imageURIs : Array<string> = [];
+  // eslint-disable-next-line no-constant-conditions
+  while (true) {
+    const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
+    const [layerKey, ] = await getAsyncArtMeta(base, layerIndexBuffer);
+
+    const layerMetadata = await anchorProgram.provider.getAccountInfo(layerKey);
+    if (layerMetadata === none) {
+      break;
+    }
+
+    const imageIndexBuffer = Buffer.from(new BN(layerMetadata.current).toArray("le", 8));
+    const [imageMintKey, ] = await getAsyncArtMint(layerKey, imageIndexBuffer);
+    const [imageMetadataKey, ] = await getMetadata(imageMintKey);
+    const imageMetadataAccount = await anchorProgram.provider.getAccountInfo(imageMetadataKey);
+    if (imageMetadataAccount === none) {
+      log.warn(`Layer metadata ${layerIndex} points to `
+               + `invalid image index ${layerMetadata.current}`);
+    } else {
+      const imageMetadataDecoded = decodeMetadata(imageMetadataAccount.data);
+      imageURIs.push(imageMetadataDecoded.data.uri);
+    }
+
+    ++layerIndex;
+  }
+
+  console.log(`Fetching images ${imageURIs} from ${layerIndex} layers`);
+
+  const compositeDir = path.join(os.tmpdir(), 'img-');
+  await mkdtemp(compositeDir);
+  const imageFiles = [];
+  for (const uri of imageURIs) {
+    const offchainImageMetadata = await (await fetch(uri)).json();
+    if (!offchainImageMetadata.image) {
+      log.error(`Did not find image field on off-chain metadata at ${uri}`);
+      continue;
+    }
+
+    const imageBlob = await (await fetch(offchainImageMetadata.image)).blob();
+    const imageFile = path.join(compositeDir, offchainImageMetadata.name);
+    fs.writeFileSync(imageFile, imageBlob);
+    imageFiles.push(imageFile);
+  }
+
+  if (imageFiles.length === 0) {
+    throw new Error('Ended up with 0 image files to composite');
+  }
+
+  const base = imageFiles[0];
+  for (let index = 1; index < imageFiles.length; ++index) {
+    // call `composite imageFiles[index] base`
+  }
+}

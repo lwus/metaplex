@@ -4,23 +4,18 @@ import * as path from 'path';
 import { program } from 'commander';
 import log from 'loglevel';
 
-import * as anchor from '@project-serum/anchor';
 import {
   Commitment,
   Connection as RPCConnection,
   Keypair,
   PublicKey,
-  SystemProgram,
   Transaction,
   TransactionInstruction,
-  SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
-import { sha256 } from "js-sha256";
 import BN from 'bn.js';
 
 import {
   getMetadata,
-  getMasterEdition,
   loadAsyncArtProgram,
 } from './helpers/accounts';
 import {
@@ -28,10 +23,6 @@ import {
   saveCache,
 } from './helpers/cache';
 import {
-  ASYNCART_PROGRAM_ID,
-  TOKEN_METADATA_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   EXTENSION_PNG,
 } from './helpers/constants';
 import {
@@ -39,8 +30,10 @@ import {
 } from './helpers/transactions';
 import { arweaveUpload } from './helpers/upload/arweave';
 import {
+  createImage,
   createLayer,
   createMaster,
+  compositeImage,
 } from './helpers/asyncart/create';
 
 program.version('0.0.1');
@@ -62,7 +55,7 @@ programCommand('upload')
     '--schema-image <filename>',
     `Image tied to the uploaded schema file`,
   )
-  .action(async (options, cmd) => {
+  .action(async (options) => {
     log.info(`Parsed options:`, options);
 
     const schema = JSON.parse(fs.readFileSync(options.file).toString());
@@ -190,7 +183,7 @@ programCommand('upload')
 
 // NB: assumes already uploaded
 programCommand('create')
-  .action(async (options, cmd) => {
+  .action(async (options) => {
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
@@ -308,8 +301,22 @@ programCommand('create')
     }
   });
 
+// NB: assumes already created. fetches configuration from on-chain
+programCommand('composite_image')
+  .action(async (options) => {
+    log.info(`Parsed options:`, options);
+
+    const wallet = loadWalletKey(options.keypair);
+    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+
+    const base = wallet.publicKey;
+
+    await compositeImage(base, anchorProgram);
+  });
+
+
 programCommand('create_master')
-  .action(async (options, cmd) => {
+  .action(async (options) => {
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
@@ -352,7 +359,7 @@ programCommand('create_layer')
     '--index <number>',
     `Layer index`,
   )
-  .action(async (options, cmd) => {
+  .action(async (options) => {
     log.info(`Parsed options:`, options);
 
     const index = Number(options.index);
