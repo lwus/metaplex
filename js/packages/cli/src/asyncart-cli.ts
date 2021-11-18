@@ -80,9 +80,7 @@ programCommand('upload')
     const wallet = loadWalletKey(options.keypair);
     const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
-    const cacheName = 'asyncart';
-
-    const savedContent = loadCache(cacheName, options.env);
+    const savedContent = loadCache(options.cacheName, options.env);
     const cacheContent = savedContent || {};
 
     let existingInCache = [];
@@ -152,7 +150,7 @@ programCommand('upload')
               name: manifest.name,
               onChain: false,
             };
-            saveCache(cacheName, options.env, cacheContent);
+            saveCache(options.cacheName, options.env, cacheContent);
           }
         } catch (er) {
           log.error(`Error uploading file ${index}`, er);
@@ -183,7 +181,7 @@ programCommand('upload')
           cacheContent.schema = {
             link: schemaLink,
           };
-          saveCache(cacheName, options.env, cacheContent);
+          saveCache(options.cacheName, options.env, cacheContent);
         }
       } catch (er) {
         log.error(`Error uploading schema`, er);
@@ -193,14 +191,10 @@ programCommand('upload')
 
 // NB: assumes already uploaded
 programCommand('create')
-  .option(
-    '--file <number>',
-    `File specification`,
-  )
   .action(async (options, cmd) => {
     log.info(`Parsed options:`, options);
 
-    const schema = JSON.parse(fs.readFileSync(options.file).toString());
+    const cacheContent = loadCache(options.cacheName, options.env);
   });
 
 programCommand('create_master')
@@ -210,13 +204,22 @@ programCommand('create_master')
     const wallet = loadWalletKey(options.keypair);
     const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
+    const cacheContent = loadCache(options.cacheName, options.env);
+
+    if (!cacheContent?.schema?.link) {
+      throw new Error("No schema uploaded yet");
+    }
+
+    const schema = await (await fetch(cacheContent.schema.link)).json();
+    const master = await (await fetch(schema.uri)).json();
+
     const instr = await createMaster(
-      "https://arweave.net/rZjs-LbK1eRMl3UkQjKbThQz95jJo8H1HYBMlHuRb4A",
+      cacheContent.schema.link,
       {
-        name: "tester",
-        symbol: "test",
-        uri: "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI",
-        sellerFeeBasisPoints: 0,
+        name: master.name,
+        symbol: master.symbol,
+        uri: schema.uri,
+        sellerFeeBasisPoints: master.seller_fee_basis_points,
       },
       wallet.publicKey,
       wallet,
@@ -249,13 +252,27 @@ programCommand('create_layer')
     const wallet = loadWalletKey(options.keypair);
     const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
+    const cacheContent = loadCache(options.cacheName, options.env);
+
+    if (!cacheContent?.schema?.link) {
+      throw new Error("No schema uploaded yet");
+    }
+
+    const schema = await (await fetch(cacheContent.schema.link)).json();
+
+    if (schema.layers.length >= index) {
+      throw new Error(`Only ${schema.layers.length} layers available (0-indexed)`);
+    }
+
+    const layer = await (await fetch(schema.layers[index])).json();
+
     const instr = await createLayer(
       index,
       {
-        name: "testerL2",
-        symbol: "test",
-        uri: "https://www.arweave.net/3xP6orSwjIjhuxX4ttQkjf-d3QiYbU-lqOXoLTYjOOI",
-        sellerFeeBasisPoints: 0,
+        name: layer.name,
+        symbol: layer.symbol,
+        uri: schema.layers[index],
+        sellerFeeBasisPoints: layer.seller_fee_basis_points,
       },
       wallet.publicKey,
       wallet,
@@ -285,6 +302,7 @@ function programCommand(name: string) {
       `Solana wallet location`,
       '--keypair not provided',
     )
+    .option('-c, --cache-name <string>', 'Cache file name', 'temp')
     .option('-r, --rpc-url <string>', 'Custom rpc url')
     .option('-l, --log-level <string>', 'log level', setLogLevel);
 }
