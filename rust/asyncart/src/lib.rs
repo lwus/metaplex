@@ -198,24 +198,12 @@ pub mod asyncart {
 
     pub fn create_image(
         ctx: Context<CreateImage>,
-        layer_bump: u8,
-        lindex: u64,
+        _layer_bump: u8,
+        _layer_index: u64,
         mint_bump: u8,
         mint_index: u64,
         data: Data,
     ) -> ProgramResult {
-        require!(
-            Pubkey::create_program_address(
-                &[
-                    PREFIX.as_ref(),
-                    ctx.accounts.base.key().to_bytes().as_ref(),
-                    lindex.to_le_bytes().as_ref(),
-                    &[layer_bump],
-                ],
-                &ID)
-                == Ok(ctx.accounts.layer.key()),
-            ErrorCode::InvalidLayerPDA
-        );
 
         create_mint_at_pda(
             &ctx.accounts.mint,
@@ -276,21 +264,9 @@ pub mod asyncart {
 
     pub fn update_master_schema(
         ctx: Context<UpdateMasterSchema>,
-        bump: u8,
+        _bump: u8,
         schema: String,
     ) -> ProgramResult {
-        require!(
-            Pubkey::create_program_address(
-                &[
-                    PREFIX.as_ref(),
-                    ctx.accounts.base.key().to_bytes().as_ref(),
-                    &[bump],
-                ],
-                &ID)
-                == Ok(ctx.accounts.master.key()),
-            ErrorCode::InvalidMintPDA
-        );
-
         let master = &mut ctx.accounts.master;
 
         master.schema = puffed_out_string(&schema, MAX_SCHEMA_URI_LENGTH);
@@ -528,10 +504,19 @@ pub struct CreateLayer<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(layer_bump: u8, layer_index: u64)]
 pub struct CreateImage<'info> {
     pub base: Signer<'info>,
 
     // TODO: do we need this?
+    #[account(
+        seeds = [
+            PREFIX.as_ref(),
+            base.key().to_bytes().as_ref(),
+            layer_index.to_le_bytes().as_ref()
+        ],
+        bump = layer_bump,
+    )]
     pub layer: AccountInfo<'info>,
 
     #[account(mut)]
@@ -565,15 +550,14 @@ pub struct CreateImage<'info> {
 pub struct UpdateMasterSchema<'info> {
     pub base: Signer<'info>,
 
-    // TODO: why can't I do this
-    // #[account(
-    //     seeds = [
-    //         PREFIX.as_ref(),
-    //         base.key().to_bytes().as_ref(),
-    //     ],
-    //     bump = bump,
-    //     mut,
-    // )]
+    #[account(
+        seeds = [
+            PREFIX.as_ref(),
+            base.key().to_bytes().as_ref()
+        ],
+        bump = bump,
+        mut,
+    )]
     pub master: Account<'info, Master>,
 }
 
