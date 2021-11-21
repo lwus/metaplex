@@ -128,7 +128,7 @@ pub mod asyncart {
 
     pub fn create_layer(
         ctx: Context<CreateLayer>,
-        _lbump: u8,
+        _layer_bump: u8,
         mint_bump: u8,
         layer_index: u64,
         current: u64,
@@ -270,6 +270,52 @@ pub mod asyncart {
         let master = &mut ctx.accounts.master;
 
         master.schema = puffed_out_string(&schema, MAX_SCHEMA_URI_LENGTH);
+
+        Ok(())
+    }
+
+    pub fn update_layer_value(
+        ctx: Context<UpdateLayerValue>,
+        _layer_bump: u8,
+        mint_bump: u8,
+        layer_index: u64,
+        current: u64,
+    ) -> ProgramResult {
+
+        require!(
+            Pubkey::create_program_address(
+                &[
+                    PREFIX.as_ref(),
+                    ctx.accounts.base.key.to_bytes().as_ref(),
+                    MINT.as_ref(),
+                    layer_index.to_le_bytes().as_ref(),
+                    &[mint_bump],
+                ],
+                &ID,
+            )
+            == Ok(*ctx.accounts.mint.key),
+            ErrorCode::InvalidMintPDA,
+        );
+
+        // check that the provided token account matches the expected mint
+        require!(
+            ctx.accounts.payer_ta.mint == *ctx.accounts.mint.key,
+            ErrorCode::InvalidTokenAccount,
+        );
+
+        // that the owner of this account is signing the update
+        require!(
+            ctx.accounts.payer_ta.owner == ctx.accounts.payer.key(),
+            ErrorCode::InvalidTokenAccount,
+        );
+
+        // and that the account currently has the corresponding NFT
+        require!(
+            ctx.accounts.payer_ta.amount > 0,
+            ErrorCode::InvalidTokenAmount,
+        );
+
+        ctx.accounts.layer.current = current;
 
         Ok(())
     }
@@ -561,6 +607,34 @@ pub struct UpdateMasterSchema<'info> {
     pub master: Account<'info, Master>,
 }
 
+#[derive(Accounts)]
+#[instruction(layer_bump: u8, mint_bump: u8, layer_index: u64)]
+pub struct UpdateLayerValue<'info> {
+    pub base: AccountInfo<'info>,
+
+    #[account(
+        seeds = [
+            PREFIX.as_ref(),
+            base.key().to_bytes().as_ref(),
+            layer_index.to_le_bytes().as_ref()
+        ],
+        bump = layer_bump,
+    )]
+    pub layer: Account<'info, Layer>,
+
+    #[account(mut)]
+    pub mint: AccountInfo<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(mut)]
+    pub payer_ta: Account<'info, token::TokenAccount>,
+
+    pub system_program: Program<'info, System>,
+
+}
+
 #[account]
 #[derive(Default)]
 pub struct Master {
@@ -588,4 +662,8 @@ pub enum ErrorCode {
     InvalidMintPDA,
     #[msg("Invalid Layer PDA")]
     InvalidLayerPDA,
+    #[msg("Invalid Token Account")]
+    InvalidTokenAccount,
+    #[msg("Invalid Token Amount")]
+    InvalidTokenAmount,
 }
