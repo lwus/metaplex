@@ -229,6 +229,7 @@ programCommand('create')
     }
 
     if (!await onChain((await getAsyncArtMeta(base))[0])) {
+      log.info(`Creating master metadata`);
       const masterMetadata = await (await fetch(schema.uri)).json();
       const instr = await createMaster(
         cacheContent.schema.link,
@@ -282,7 +283,7 @@ programCommand('create')
 
         // TODO: a bit inconsistent that we use the mint here but no direct
         // metadata for the image
-        const imageIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
+        const imageIndexBuffer = Buffer.from(new BN(imageIndex).toArray("le", 8));
         if (!await onChain((await getAsyncArtMint(layerKey, imageIndexBuffer))[0])) {
           log.info(`Creating image ${imageIndex} of layer ${layerIndex} metadata`);
           const imageMetadata = await (await fetch(image.uri)).json();

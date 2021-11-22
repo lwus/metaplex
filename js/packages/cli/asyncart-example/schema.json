@@ -8,17 +8,17 @@
       ]
     },
     {
-      "uri": "glaze.png",
-      "images": [
-        { "uri": "3.png" },
-        { "uri": "4.png" }
-      ]
-    },
-    {
       "uri": "dough.png",
       "images": [
         { "uri": "1.png" },
         { "uri": "2.png" }
+      ]
+    },
+    {
+      "uri": "glaze.png",
+      "images": [
+        { "uri": "3.png" },
+        { "uri": "4.png" }
       ]
     }
   ]

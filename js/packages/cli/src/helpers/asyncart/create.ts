@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as util from 'util';
 import log from 'loglevel';
+import fetch from 'node-fetch';
 
 import * as anchor from '@project-serum/anchor';
 import {
@@ -214,11 +215,15 @@ export const compositeImage = async (
     const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
     const [layerKey, ] = await getAsyncArtMeta(base, layerIndexBuffer);
 
-    const layerMetadata = await anchorProgram.account.layer.fetch(layerKey);
-    if (layerMetadata === null) {
+    const layerMetadataAccount = await anchorProgram.provider.connection.getAccountInfo(layerKey);
+    if (layerMetadataAccount === null) {
       break;
     }
 
+    const layerMetadata = anchorProgram.coder.accounts.decode(
+      'Layer', layerMetadataAccount.data);
+
+    log.info(`Layer ${layerIndex} at ${layerKey.toBase58()} is currently ${new BN(layerMetadata.current).toNumber()}`);
     const imageIndexBuffer = Buffer.from(new BN(layerMetadata.current).toArray("le", 8));
     const [imageMintKey, ] = await getAsyncArtMint(layerKey, imageIndexBuffer);
     const imageMetadataKey = await getMetadata(imageMintKey);
@@ -236,8 +241,9 @@ export const compositeImage = async (
 
   console.log(`Fetching images ${imageURIs} from ${layerIndex} layers`);
 
-  const compositeDir = path.join(os.tmpdir(), 'img-');
-  fs.mkdtempSync(compositeDir);
+  const compositeBase = path.join(os.tmpdir(), 'img-');
+  const compositeDir = fs.mkdtempSync(compositeBase);
+  log.info(`Downloading files to ${compositeDir}`);
   const imageFiles = [];
   for (const uri of imageURIs) {
     const offchainImageMetadata = await (await fetch(uri)).json();
@@ -256,8 +262,11 @@ export const compositeImage = async (
     throw new Error('Ended up with 0 image files to composite');
   }
 
+  const exec = util.promisify(child_process.exec);
   const output = imageFiles[0];
   for (let index = 1; index < imageFiles.length; ++index) {
-    // call `composite imageFiles[index] output`
+    const { stdout, stderr } = await(exec(`composite ${imageFiles[index]} ${output} ${output}`));
+    console.log('stdout:', stdout);
+    console.error('stderr:', stderr);
   }
 }
