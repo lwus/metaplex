@@ -347,6 +347,20 @@ programCommand('update_layer_value')
 
     const layerIndexBuffer = Buffer.from(new BN(layer).toArray("le", 8));
     const [layerKey, layerBump] = await getAsyncArtMeta(base, layerIndexBuffer);
+
+    {
+      // check that this image exists...
+      const imageIndexBuffer = Buffer.from(new BN(value).toArray("le", 8));
+      const [imageMintKey, ] = await getAsyncArtMint(layerKey, imageIndexBuffer);
+
+      const imageMetadataKey = await getMetadata(imageMintKey);
+      const imageMetadataAccount = await anchorProgram.provider.connection.getAccountInfo(imageMetadataKey);
+
+      if (imageMetadataAccount === null) {
+        throw new Error(`Layer ${layer} does not have an image at index ${value}`);
+      }
+    }
+
     const [mintKey, mintBump] = await getAsyncArtMint(base, layerIndexBuffer);
 
     const walletTokenKey = await getTokenWallet(wallet.publicKey, mintKey);
