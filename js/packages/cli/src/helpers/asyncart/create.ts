@@ -1,4 +1,11 @@
 
+import * as child_process from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import * as util from 'util';
+import log from 'loglevel';
+
 import * as anchor from '@project-serum/anchor';
 import {
   Keypair,
@@ -19,6 +26,9 @@ import {
   TOKEN_PROGRAM_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
 } from '../constants';
+import {
+  decodeMetadata,
+} from '../schema';
 
 export const ASYNCART_PREFIX = Buffer.from("asyncart");
 export const ASYNCART_MINT = Buffer.from("mint");
@@ -160,7 +170,7 @@ export const createImage = async (
 
   const walletTokenKey = await getTokenWallet(wallet.publicKey, mintKey);
 
-  return await anchorProgram.instruction.createLayer(
+  return await anchorProgram.instruction.createImage(
     layerBump,
     new BN(layerIndex),
     mintBump,
@@ -185,14 +195,14 @@ export const createImage = async (
     });
 };
 
-export const createImage = async (
+export const compositeImage = async (
   base: PublicKey,
   anchorProgram: anchor.Program,
 ) => {
   const [masterKey, ] = await getAsyncArtMeta(base);
 
-  const masterMetadata = await anchorProgram.provider.getAccountInfo(masterKey);
-  if (masterMetadata === none) {
+  const masterMetadata = await anchorProgram.account.master.fetch(masterKey);
+  if (masterMetadata === null) {
     // mostly a sanity check...
     throw new Error(`Could not fetch master metadata for ${base.toBase58()}`);
   }
@@ -204,16 +214,16 @@ export const createImage = async (
     const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
     const [layerKey, ] = await getAsyncArtMeta(base, layerIndexBuffer);
 
-    const layerMetadata = await anchorProgram.provider.getAccountInfo(layerKey);
-    if (layerMetadata === none) {
+    const layerMetadata = await anchorProgram.account.layer.fetch(layerKey);
+    if (layerMetadata === null) {
       break;
     }
 
     const imageIndexBuffer = Buffer.from(new BN(layerMetadata.current).toArray("le", 8));
     const [imageMintKey, ] = await getAsyncArtMint(layerKey, imageIndexBuffer);
-    const [imageMetadataKey, ] = await getMetadata(imageMintKey);
-    const imageMetadataAccount = await anchorProgram.provider.getAccountInfo(imageMetadataKey);
-    if (imageMetadataAccount === none) {
+    const imageMetadataKey = await getMetadata(imageMintKey);
+    const imageMetadataAccount = await anchorProgram.provider.connection.getAccountInfo(imageMetadataKey);
+    if (imageMetadataAccount === null) {
       log.warn(`Layer metadata ${layerIndex} points to `
                + `invalid image index ${layerMetadata.current}`);
     } else {
@@ -227,7 +237,7 @@ export const createImage = async (
   console.log(`Fetching images ${imageURIs} from ${layerIndex} layers`);
 
   const compositeDir = path.join(os.tmpdir(), 'img-');
-  await mkdtemp(compositeDir);
+  fs.mkdtempSync(compositeDir);
   const imageFiles = [];
   for (const uri of imageURIs) {
     const offchainImageMetadata = await (await fetch(uri)).json();
@@ -238,7 +248,7 @@ export const createImage = async (
 
     const imageBlob = await (await fetch(offchainImageMetadata.image)).blob();
     const imageFile = path.join(compositeDir, offchainImageMetadata.name);
-    fs.writeFileSync(imageFile, imageBlob);
+    fs.writeFileSync(imageFile, Buffer.from(await imageBlob.arrayBuffer()));
     imageFiles.push(imageFile);
   }
 
@@ -246,8 +256,8 @@ export const createImage = async (
     throw new Error('Ended up with 0 image files to composite');
   }
 
-  const base = imageFiles[0];
+  const output = imageFiles[0];
   for (let index = 1; index < imageFiles.length; ++index) {
-    // call `composite imageFiles[index] base`
+    // call `composite imageFiles[index] output`
   }
 }

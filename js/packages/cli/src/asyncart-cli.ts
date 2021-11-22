@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
 import log from 'loglevel';
+import fetch from 'node-fetch';
 
 import {
   Commitment,
@@ -34,6 +35,8 @@ import {
   createLayer,
   createMaster,
   compositeImage,
+  getAsyncArtMeta,
+  getAsyncArtMint,
 } from './helpers/asyncart/create';
 
 program.version('0.0.1');
@@ -225,7 +228,7 @@ programCommand('create')
       throw new Error(`Could not find URI ${masterURI} in cached state`);
     }
 
-    if (!await onChain(await getAsyncArtMeta(base)[0])) {
+    if (!await onChain((await getAsyncArtMeta(base))[0])) {
       const masterMetadata = await (await fetch(schema.uri)).json();
       const instr = await createMaster(
         cacheContent.schema.link,
@@ -252,6 +255,7 @@ programCommand('create')
       const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
       const [layerKey, ] = await getAsyncArtMeta(base, layerIndexBuffer);
       if (!await onChain(layerKey)) {
+        log.info(`Creating layer ${layerIndex} metadata`);
         const layerMetadata = await (await fetch(layer.uri)).json();
         const instr = await createLayer(
           layerIndex,
@@ -279,7 +283,8 @@ programCommand('create')
         // TODO: a bit inconsistent that we use the mint here but no direct
         // metadata for the image
         const imageIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
-        if (!await onChain(await getAsyncArtMint(layerKey, imageIndexBuffer))) {
+        if (!await onChain((await getAsyncArtMint(layerKey, imageIndexBuffer))[0])) {
+          log.info(`Creating image ${imageIndex} of layer ${layerIndex} metadata`);
           const imageMetadata = await (await fetch(image.uri)).json();
           const instr = await createImage(
             layerIndex,
@@ -420,7 +425,7 @@ function programCommand(name: string) {
       `Solana wallet location`,
       '--keypair not provided',
     )
-    .option('-c, --cache-name <string>', 'Cache file name', 'temp')
+    .option('-c, --cache-name <string>', 'Cache file name', 'asyncart')
     .option('-r, --rpc-url <string>', 'Custom rpc url')
     .option('-l, --log-level <string>', 'log level', setLogLevel);
 }
