@@ -10,6 +10,7 @@ import {
   Connection as RPCConnection,
   Keypair,
   PublicKey,
+  SystemProgram,
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
@@ -17,6 +18,7 @@ import BN from 'bn.js';
 
 import {
   getMetadata,
+  getTokenWallet,
   loadAsyncArtProgram,
 } from './helpers/accounts';
 import {
@@ -320,6 +322,62 @@ programCommand('composite_image')
     await compositeImage(base, anchorProgram);
   });
 
+programCommand('update_layer_value')
+  .option(
+    '--layer <number>',
+    `Layer to set value for`,
+  )
+  .option(
+    '--value <number>',
+    `Value to set`,
+  )
+  .action(async (options) => {
+    log.info(`Parsed options:`, options);
+
+    const layer = Number(options.layer);
+    const value = Number(options.value);
+    if (isNaN(layer) || isNaN(value)) {
+      throw new Error(`Could not parse layer ${layer} or value ${value}`);
+    }
+
+    const wallet = loadWalletKey(options.keypair);
+    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+
+    const base = wallet.publicKey;
+
+    const layerIndexBuffer = Buffer.from(new BN(layer).toArray("le", 8));
+    const [layerKey, layerBump] = await getAsyncArtMeta(base, layerIndexBuffer);
+    const [mintKey, mintBump] = await getAsyncArtMint(base, layerIndexBuffer);
+
+    const walletTokenKey = await getTokenWallet(wallet.publicKey, mintKey);
+
+    const instr = await anchorProgram.instruction.updateLayerValue(
+      layerBump,
+      mintBump,
+      new BN(layer),
+      new BN(value),
+      {
+        accounts: {
+          base: base,
+          layer: layerKey,
+          mint: mintKey,
+          payer: wallet.publicKey,
+          payerTa: walletTokenKey,
+          systemProgram: SystemProgram.programId,
+        },
+        signers: [],
+      },
+    );
+
+    const updateResult = await sendTransactionWithRetry(
+      anchorProgram.provider.connection,
+      wallet,
+      [instr],
+      [],
+    );
+
+    log.info(updateResult);
+  });
 
 programCommand('create_master')
   .action(async (options) => {

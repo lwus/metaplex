@@ -318,7 +318,9 @@ pub mod asyncart {
             ErrorCode::InvalidTokenAmount,
         );
 
-        ctx.accounts.layer.current = current;
+        let layer = &mut ctx.accounts.layer;
+
+        layer.current = current;
 
         Ok(())
     }
@@ -622,16 +624,14 @@ pub struct UpdateLayerValue<'info> {
             layer_index.to_le_bytes().as_ref()
         ],
         bump = layer_bump,
+        mut,
     )]
     pub layer: Account<'info, Layer>,
 
-    #[account(mut)]
     pub mint: AccountInfo<'info>,
 
-    #[account(mut)]
     pub payer: Signer<'info>,
 
-    #[account(mut)]
     pub payer_ta: Account<'info, token::TokenAccount>,
 
     pub system_program: Program<'info, System>,
