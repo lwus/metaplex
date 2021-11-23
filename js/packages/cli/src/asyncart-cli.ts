@@ -185,6 +185,11 @@ programCommand('upload')
 
 // NB: assumes already uploaded
 programCommand('create')
+  .option(
+    '--base <pubkey>',
+    `Base key for the collection`,
+    '--base not provided',
+  )
   .action(async (options) => {
     log.info(`Parsed options:`, options);
 
@@ -207,7 +212,7 @@ programCommand('create')
       return await anchorProgram.provider.connection.getAccountInfo(address) !== null;
     }
 
-    const base = wallet.publicKey;
+    const base = new PublicKey(options.base);
 
     const cacheContent = loadCache(options.cacheName, options.env);
 
@@ -308,31 +313,46 @@ programCommand('create')
 
 // NB: assumes already created. fetches configuration from on-chain
 programCommand('composite_image')
+  .option(
+    '--base <pubkey>',
+    `Base key for the collection`,
+    '--base not provided',
+  )
   .action(async (options) => {
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
     const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
-    const base = wallet.publicKey;
+    const base = new PublicKey(options.base);
 
     await compositeImage(base, anchorProgram);
   });
 
 // NB: assumes already created. fetches configuration from on-chain
 programCommand('paste_rgb_image')
+  .option(
+    '--base <pubkey>',
+    `Base key for the collection`,
+    '--base not provided',
+  )
   .action(async (options) => {
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
     const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
-    const base = wallet.publicKey;
+    const base = new PublicKey(options.base);
 
     await pasteRGBImage(base, anchorProgram);
   });
 
 programCommand('update_layer_value')
+  .option(
+    '--base <pubkey>',
+    `Base key for the collection`,
+    '--base not provided',
+  )
   .option(
     '--layer <number>',
     `Layer to set value for`,
@@ -353,7 +373,7 @@ programCommand('update_layer_value')
     const wallet = loadWalletKey(options.keypair);
     const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
-    const base = wallet.publicKey;
+    const base = new PublicKey(options.base);
 
     const layerIndexBuffer = Buffer.from(new BN(layer).toArray("le", 8));
     const [layerKey, layerBump] = await getAsyncArtMeta(base, layerIndexBuffer);
