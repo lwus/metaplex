@@ -39,6 +39,7 @@ import {
   compositeImage,
   getAsyncArtMeta,
   getAsyncArtMint,
+  pasteRGBImage,
 } from './helpers/asyncart/create';
 
 program.version('0.0.1');
@@ -55,10 +56,6 @@ programCommand('upload')
   .option(
     '--file <number>',
     `File specification`,
-  )
-  .option(
-    '--schema-image <filename>',
-    `Image tied to the uploaded schema file`,
   )
   .action(async (options) => {
     log.info(`Parsed options:`, options);
@@ -320,6 +317,19 @@ programCommand('composite_image')
     const base = wallet.publicKey;
 
     await compositeImage(base, anchorProgram);
+  });
+
+// NB: assumes already created. fetches configuration from on-chain
+programCommand('paste_rgb_image')
+  .action(async (options) => {
+    log.info(`Parsed options:`, options);
+
+    const wallet = loadWalletKey(options.keypair);
+    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+
+    const base = wallet.publicKey;
+
+    await pasteRGBImage(base, anchorProgram);
   });
 
 programCommand('update_layer_value')

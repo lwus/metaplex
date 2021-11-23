@@ -1,4 +1,3 @@
-
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -196,7 +195,7 @@ export const createImage = async (
     });
 };
 
-export const compositeImage = async (
+export const fetchCurrentImages = async (
   base: PublicKey,
   anchorProgram: anchor.Program,
 ) => {
@@ -210,7 +209,7 @@ export const compositeImage = async (
 
   let layerIndex = 0;
   const imageURIs : Array<string> = [];
-  // eslint-disable-next-line no-constant-conditions
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
     const [layerKey, ] = await getAsyncArtMeta(base, layerIndexBuffer);
@@ -262,6 +261,14 @@ export const compositeImage = async (
     throw new Error('Ended up with 0 image files to composite');
   }
 
+  return imageFiles;
+}
+
+export const compositeImage = async (
+  base: PublicKey,
+  anchorProgram: anchor.Program,
+) => {
+  const imageFiles = await fetchCurrentImages(base, anchorProgram);
   const exec = util.promisify(child_process.exec);
   const output = imageFiles[0];
   for (let index = 1; index < imageFiles.length; ++index) {
@@ -269,4 +276,21 @@ export const compositeImage = async (
     console.log('stdout:', stdout);
     console.error('stderr:', stderr);
   }
+}
+
+export const pasteRGBImage = async (
+  base: PublicKey,
+  anchorProgram: anchor.Program,
+) => {
+  const imageFiles = await fetchCurrentImages(base, anchorProgram);
+  if (imageFiles.length !== 3) {
+    throw new Error(`Need exactly 3 images for RGB separation and pasting. Got ${imageFiles.length}`);
+  }
+
+  const tmpdir = path.dirname(imageFiles[0]);
+  const exec = util.promisify(child_process.exec);
+  await exec(`convert -channel R -separate ${imageFiles[0]} ${tmpdir}/r.png`);
+  await exec(`convert -channel G -separate ${imageFiles[1]} ${tmpdir}/g.png`);
+  await exec(`convert -channel B -separate ${imageFiles[2]} ${tmpdir}/b.png`);
+  await exec(`convert ${tmpdir}/r.png ${tmpdir}/g.png ${tmpdir}/b.png -channel RGB -combine ${tmpdir}/output.png`);
 }
