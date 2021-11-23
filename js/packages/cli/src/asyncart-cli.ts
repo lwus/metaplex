@@ -186,7 +186,7 @@ programCommand('upload')
 // NB: assumes already uploaded
 programCommand('create')
   .option(
-    '--base <pubkey>',
+    '--base <path>',
     `Base key for the collection`,
     '--base not provided',
   )
@@ -196,12 +196,14 @@ programCommand('create')
     const wallet = loadWalletKey(options.keypair);
     const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
 
+    const base = loadWalletKey(options.base);
+
     const create = async (instr : TransactionInstruction) => {
       const createResult = await sendTransactionWithRetry(
         anchorProgram.provider.connection,
         wallet,
         [instr],
-        [],
+        [base],
       );
 
       log.info(createResult);
@@ -211,8 +213,6 @@ programCommand('create')
     const onChain = async (address : PublicKey) => {
       return await anchorProgram.provider.connection.getAccountInfo(address) !== null;
     }
-
-    const base = new PublicKey(options.base);
 
     const cacheContent = loadCache(options.cacheName, options.env);
 
@@ -232,7 +232,7 @@ programCommand('create')
       throw new Error(`Could not find URI ${masterURI} in cached state`);
     }
 
-    if (!await onChain((await getAsyncArtMeta(base))[0])) {
+    if (!await onChain((await getAsyncArtMeta(base.publicKey))[0])) {
       log.info(`Creating master metadata`);
       const masterMetadata = await (await fetch(schema.uri)).json();
       const instr = await createMaster(
@@ -243,7 +243,7 @@ programCommand('create')
           uri: masterURI,
           sellerFeeBasisPoints: masterMetadata.seller_fee_basis_points,
         },
-        base,
+        base.publicKey,
         wallet,
         anchorProgram
       );
@@ -258,7 +258,7 @@ programCommand('create')
       }
 
       const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
-      const [layerKey, ] = await getAsyncArtMeta(base, layerIndexBuffer);
+      const [layerKey, ] = await getAsyncArtMeta(base.publicKey, layerIndexBuffer);
       if (!await onChain(layerKey)) {
         log.info(`Creating layer ${layerIndex} metadata`);
         const layerMetadata = await (await fetch(layer.uri)).json();
@@ -270,7 +270,7 @@ programCommand('create')
             uri: layer.uri,
             sellerFeeBasisPoints: layerMetadata.seller_fee_basis_points,
           },
-          base,
+          base.publicKey,
           wallet,
           anchorProgram
         );
@@ -300,7 +300,7 @@ programCommand('create')
               uri: image.uri,
               sellerFeeBasisPoints: imageMetadata.seller_fee_basis_points,
             },
-            base,
+            base.publicKey,
             wallet,
             anchorProgram
           );
