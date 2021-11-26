@@ -5,11 +5,9 @@ import {
   Route,
   Switch,
 } from "react-router-dom";
-import ContentLoader from 'react-content-loader';
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import { Image } from 'antd';
 import {
   Box,
   Button,
@@ -164,41 +162,6 @@ export const HoverButton = (
     </Button>
   );
 };
-
-export const ThreeDots = () => (
-  <ContentLoader
-    viewBox="0 0 212 200"
-    height={200}
-    width={212}
-    backgroundColor="transparent"
-    style={{
-      width: '100%',
-      margin: 'auto',
-    }}
-  >
-    <circle cx="86" cy="100" r="8" />
-    <circle cx="106" cy="100" r="8" />
-    <circle cx="126" cy="100" r="8" />
-  </ContentLoader>
-);
-
-const LoadingImage = (
-  props : {
-    url : string,
-  },
-) => {
-  const [loaded, setLoaded] = React.useState<boolean>(false);
-  return (
-    <Image
-      src={props.url}
-      onLoad={() => {
-        setLoaded(true);
-      }}
-      placeholder={<ThreeDots />}
-      {...(loaded ? {} : { height: "100%" })}
-    />
-  );
-}
 
 const fetchLatestLayer = async (
   program : anchor.Program,
@@ -524,8 +487,8 @@ const About = () => {
                   minWidth: '30ch',
                 }}
               >
-                <LoadingImage
-                  url={r.image}
+                <img
+                  src={r.image}
                 />
               </ImageListItem>
             </HoverButton>
@@ -632,8 +595,8 @@ const About = () => {
                 minWidth: '30ch',
               }}
             >
-              <LoadingImage
-                url={activeImage.image}
+              <img
+                src={activeImage.image}
               />
             </ImageListItem>
           </HoverButton>
