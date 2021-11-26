@@ -4,6 +4,14 @@ export const ASYNCART_PROGRAM_ID = new PublicKey(
   'Ax22eZWmvg77HAE5eWbvhdzZYLPmv6C8TV28ivasjB5L',
 );
 
+export const ASYNCART_PREFIX = Buffer.from(
+  'asyncart',
+);
+
+export const ASYNCART_MINT = Buffer.from(
+  'mint'
+);
+
 export const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
 );
