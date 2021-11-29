@@ -38,8 +38,8 @@ declare_id!("Ax22eZWmvg77HAE5eWbvhdzZYLPmv6C8TV28ivasjB5L");
 // Where `master` is a Keypair and each `layer` is a PDA of `master` and the index and each `image`
 // is a PDA of it's layer and index. Everything is an NFT that can be independently traded.
 //
-// `layer` has additional metadata owned by the `asyncart` program that describes the currently
-// active image. The NFT URI points to a cover image as with the existing asyncart layers.
+// `layer` has additional metadata owned by the `glaze` program that describes the currently
+// active image. The NFT URI points to a cover image as with the existing glaze layers.
 //
 // `master` is a mutable NFT that represents the currently selected layers composed with a schema
 // that can be generated with an off-chain program. There will be both a 'current' representation
@@ -51,13 +51,13 @@ declare_id!("Ax22eZWmvg77HAE5eWbvhdzZYLPmv6C8TV28ivasjB5L");
 // more quickly?
 
 
-pub const PREFIX: &[u8] = b"asyncart";
+pub const PREFIX: &[u8] = b"glaze";
 pub const LAYER: &[u8] = b"layer";
 pub const MINT: &[u8] = b"mint";
 pub const MAX_SCHEMA_URI_LENGTH: usize = 200; // smaller?
 
 #[program]
-pub mod asyncart {
+pub mod glaze {
     use super::*;
 
     pub fn create_master(

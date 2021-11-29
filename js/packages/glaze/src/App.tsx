@@ -52,41 +52,41 @@ import {
 } from "./contexts";
 import { Header } from "./components/Header/Header";
 import {
-  ASYNCART_MINT,
-  ASYNCART_PREFIX,
-  ASYNCART_PROGRAM_ID,
+  GLAZE_MINT,
+  GLAZE_PREFIX,
+  GLAZE_PROGRAM_ID,
 } from './utils/ids';
 import {
   envFor,
   explorerLinkFor,
 } from './utils/transactions';
 
-export const getAsyncArtMeta = async (
+export const getGlazeMeta = async (
   base: PublicKey,
   index: Buffer = Buffer.from([]),
 ) => {
   return await PublicKey.findProgramAddress(
     [
-      ASYNCART_PREFIX,
+      GLAZE_PREFIX,
       base.toBuffer(),
       index,
     ],
-    ASYNCART_PROGRAM_ID
+    GLAZE_PROGRAM_ID
   );
 }
 
-export const getAsyncArtMint = async (
+export const getGlazeMint = async (
   base: PublicKey,
   index: Buffer = Buffer.from([]),
 ) => {
   return await PublicKey.findProgramAddress(
     [
-      ASYNCART_PREFIX,
+      GLAZE_PREFIX,
       base.toBuffer(),
-      ASYNCART_MINT,
+      GLAZE_MINT,
       index,
     ],
-    ASYNCART_PROGRAM_ID
+    GLAZE_PROGRAM_ID
   );
 }
 
@@ -169,8 +169,8 @@ const fetchLatestLayer = async (
   layerIndex : number,
 ) => {
   const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
-  const [layerKey, ] = await getAsyncArtMeta(baseKey, layerIndexBuffer);
-  const [layerMintKey, ] = await getAsyncArtMint(baseKey, layerIndexBuffer);
+  const [layerKey, ] = await getGlazeMeta(baseKey, layerIndexBuffer);
+  const [layerMintKey, ] = await getGlazeMint(baseKey, layerIndexBuffer);
 
   const layer = await program.account.layer.fetch(layerKey);
 
@@ -201,7 +201,7 @@ const fetchLatestImage = async (
   r : LayerMeta,
 ) => {
   const imageIndexBuffer = Buffer.from(new BN(r.current).toArray('le', 8));
-  const [imageMintKey, ] = await getAsyncArtMint(r.layerKey, imageIndexBuffer);
+  const [imageMintKey, ] = await getGlazeMint(r.layerKey, imageIndexBuffer);
   const imageMetadataKey = new PublicKey(await getMetadata(imageMintKey.toBase58()));
   const imageMetadataAccount = await program.provider.connection.getAccountInfo(imageMetadataKey);
   if (imageMetadataAccount === null) {
@@ -252,9 +252,9 @@ const About = () => {
         const provider = new anchor.Provider(connection, anchorWallet, {
           preflightCommitment: 'recent',
         });
-        const idl = await anchor.Program.fetchIdl(ASYNCART_PROGRAM_ID, provider);
+        const idl = await anchor.Program.fetchIdl(GLAZE_PROGRAM_ID, provider);
 
-        const program = new anchor.Program(idl, ASYNCART_PROGRAM_ID, provider);
+        const program = new anchor.Program(idl, GLAZE_PROGRAM_ID, provider);
         setProgram(program);
       } catch (err) {
         console.error('Failed to fetch IDL', err);
@@ -295,10 +295,10 @@ const About = () => {
 
     const [masterKey, ] = await PublicKey.findProgramAddress(
       [
-        ASYNCART_PREFIX,
+        GLAZE_PREFIX,
         baseKey.toBuffer(),
       ],
-      ASYNCART_PROGRAM_ID
+      GLAZE_PROGRAM_ID
     );
     let master;
     try {
@@ -351,12 +351,12 @@ const About = () => {
     const baseKey = new PublicKey(base);
 
     const layerIndexBuffer = Buffer.from(new BN(layer.index).toArray("le", 8));
-    const [layerKey, layerBump] = await getAsyncArtMeta(baseKey, layerIndexBuffer);
+    const [layerKey, layerBump] = await getGlazeMeta(baseKey, layerIndexBuffer);
 
     {
       // check that the new image exists...
       const imageIndexBuffer = Buffer.from(new BN(value).toArray("le", 8));
-      const [imageMintKey, ] = await getAsyncArtMint(layerKey, imageIndexBuffer);
+      const [imageMintKey, ] = await getGlazeMint(layerKey, imageIndexBuffer);
 
       const imageMetadataKey = new PublicKey(await getMetadata(imageMintKey.toBase58()));
       const imageMetadataAccount = await connection.getAccountInfo(imageMetadataKey);
@@ -366,7 +366,7 @@ const About = () => {
       }
     }
 
-    const [mintKey, mintBump] = await getAsyncArtMint(baseKey, layerIndexBuffer);
+    const [mintKey, mintBump] = await getGlazeMint(baseKey, layerIndexBuffer);
 
     const [walletTokenKey, ] = await PublicKey.findProgramAddress(
       [
@@ -753,7 +753,7 @@ function App() {
           >
             <Box height="40px" />
             <Switch>
-              <Route exact path="/asyncart/" component={About} />
+              <Route exact path="/glaze/" component={About} />
             </Switch>
             <Box height="80px" />
           </Box>

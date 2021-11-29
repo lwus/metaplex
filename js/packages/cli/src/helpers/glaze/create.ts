@@ -21,7 +21,7 @@ import {
   getTokenWallet,
 } from '../accounts';
 import {
-  ASYNCART_PROGRAM_ID,
+  GLAZE_PROGRAM_ID,
   TOKEN_METADATA_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
@@ -30,8 +30,8 @@ import {
   decodeMetadata,
 } from '../schema';
 
-export const ASYNCART_PREFIX = Buffer.from("asyncart");
-export const ASYNCART_MINT = Buffer.from("mint");
+export const GLAZE_PREFIX = Buffer.from("glaze");
+export const GLAZE_MINT = Buffer.from("mint");
 
 export type Data = {
   name: string,
@@ -40,32 +40,32 @@ export type Data = {
   sellerFeeBasisPoints: number,
 };
 
-export const getAsyncArtMeta = async (
+export const getGlazeMeta = async (
   base: PublicKey,
   index: Buffer = Buffer.from([]),
 ) => {
   return await PublicKey.findProgramAddress(
     [
-      ASYNCART_PREFIX,
+      GLAZE_PREFIX,
       base.toBuffer(),
       index,
     ],
-    ASYNCART_PROGRAM_ID
+    GLAZE_PROGRAM_ID
   );
 }
 
-export const getAsyncArtMint = async (
+export const getGlazeMint = async (
   base: PublicKey,
   index: Buffer = Buffer.from([]),
 ) => {
   return await PublicKey.findProgramAddress(
     [
-      ASYNCART_PREFIX,
+      GLAZE_PREFIX,
       base.toBuffer(),
-      ASYNCART_MINT,
+      GLAZE_MINT,
       index,
     ],
-    ASYNCART_PROGRAM_ID
+    GLAZE_PROGRAM_ID
   );
 }
 
@@ -76,8 +76,8 @@ export const createMaster = async (
   wallet: Keypair,
   anchorProgram: anchor.Program,
 ) => {
-  const [masterKey, masterBump] = await getAsyncArtMeta(base);
-  const [mintKey, mintBump] = await getAsyncArtMint(base);
+  const [masterKey, masterBump] = await getGlazeMeta(base);
+  const [mintKey, mintBump] = await getGlazeMint(base);
 
   const metadataKey = await getMetadata(mintKey);
   const metadataMaster = await getMasterEdition(mintKey);
@@ -116,9 +116,9 @@ export const createLayer = async (
 ) => {
 
   const indexBuffer = Buffer.from(new BN(index).toArray("le", 8));
-  const [layerKey, layerBump] = await getAsyncArtMeta(base, indexBuffer);
+  const [layerKey, layerBump] = await getGlazeMeta(base, indexBuffer);
 
-  const [mintKey, mintBump] = await getAsyncArtMint(base, indexBuffer);
+  const [mintKey, mintBump] = await getGlazeMint(base, indexBuffer);
 
   const metadataKey = await getMetadata(mintKey);
   const metadataMaster = await getMasterEdition(mintKey);
@@ -160,10 +160,10 @@ export const createImage = async (
 ) => {
 
   const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
-  const [layerKey, layerBump] = await getAsyncArtMeta(base, layerIndexBuffer);
+  const [layerKey, layerBump] = await getGlazeMeta(base, layerIndexBuffer);
 
   const imageIndexBuffer = Buffer.from(new BN(imageIndex).toArray("le", 8));
-  const [mintKey, mintBump] = await getAsyncArtMint(layerKey, imageIndexBuffer);
+  const [mintKey, mintBump] = await getGlazeMint(layerKey, imageIndexBuffer);
 
   const metadataKey = await getMetadata(mintKey);
   const metadataMaster = await getMasterEdition(mintKey);
@@ -199,7 +199,7 @@ export const fetchCurrentImages = async (
   base: PublicKey,
   anchorProgram: anchor.Program,
 ) => {
-  const [masterKey, ] = await getAsyncArtMeta(base);
+  const [masterKey, ] = await getGlazeMeta(base);
 
   const masterMetadata = await anchorProgram.account.master.fetch(masterKey);
   if (masterMetadata === null) {
@@ -212,7 +212,7 @@ export const fetchCurrentImages = async (
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
-    const [layerKey, ] = await getAsyncArtMeta(base, layerIndexBuffer);
+    const [layerKey, ] = await getGlazeMeta(base, layerIndexBuffer);
 
     const layerMetadataAccount = await anchorProgram.provider.connection.getAccountInfo(layerKey);
     if (layerMetadataAccount === null) {
@@ -224,7 +224,7 @@ export const fetchCurrentImages = async (
 
     log.info(`Layer ${layerIndex} at ${layerKey.toBase58()} is currently ${new BN(layerMetadata.current).toNumber()}`);
     const imageIndexBuffer = Buffer.from(new BN(layerMetadata.current).toArray("le", 8));
-    const [imageMintKey, ] = await getAsyncArtMint(layerKey, imageIndexBuffer);
+    const [imageMintKey, ] = await getGlazeMint(layerKey, imageIndexBuffer);
     const imageMetadataKey = await getMetadata(imageMintKey);
     const imageMetadataAccount = await anchorProgram.provider.connection.getAccountInfo(imageMetadataKey);
     if (imageMetadataAccount === null) {

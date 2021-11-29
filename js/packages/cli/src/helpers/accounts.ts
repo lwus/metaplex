@@ -19,7 +19,7 @@ import {
   TOKEN_ENTANGLEMENT_PROGRAM_ID,
   TOKEN_ENTANGLER,
   ESCROW,
-  ASYNCART_PROGRAM_ID,
+  GLAZE_PROGRAM_ID,
   B,
   A,
 } from './constants';
@@ -543,7 +543,7 @@ export async function loadTokenEntanglementProgream(
   return new anchor.Program(idl, TOKEN_ENTANGLEMENT_PROGRAM_ID, provider);
 }
 
-export async function loadAsyncArtProgram(
+export async function loadGlazeProgram(
   walletKeyPair: Keypair,
   env: string,
   customRpcUrl?: string,
@@ -560,9 +560,9 @@ export async function loadAsyncArtProgram(
   const provider = new anchor.Provider(solConnection, walletWrapper, {
     preflightCommitment: 'recent',
   });
-  const idl = await anchor.Program.fetchIdl(ASYNCART_PROGRAM_ID, provider);
+  const idl = await anchor.Program.fetchIdl(GLAZE_PROGRAM_ID, provider);
 
-  return new anchor.Program(idl, ASYNCART_PROGRAM_ID, provider);
+  return new anchor.Program(idl, GLAZE_PROGRAM_ID, provider);
 }
 
 export async function getTokenAmount(

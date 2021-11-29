@@ -1,8 +1,8 @@
 {
-  "name": "asyncart",
+  "name": "glaze",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://lwus.github.io/asyncart/",
+  "homepage": "https://lwus.github.io/glaze/",
   "dependencies": {
     "@emotion/react": "^11",
     "@emotion/styled": "^11",

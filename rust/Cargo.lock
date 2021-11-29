@@ -266,18 +266,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "asyncart"
-version = "0.0.1"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "metaplex-auction",
- "metaplex-token-metadata 0.0.1",
- "solana-program",
- "spl-associated-token-account",
-]
-
-[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1308,6 +1296,18 @@ name = "gimli"
 version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0a01e0497841a3b2db4f8afa483cce65f7e96a3498bd6c541734792aeac8fe7"
+
+[[package]]
+name = "glaze"
+version = "0.0.1"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "metaplex-auction",
+ "metaplex-token-metadata 0.0.1",
+ "solana-program",
+ "spl-associated-token-account",
+]
 
 [[package]]
 name = "glob"

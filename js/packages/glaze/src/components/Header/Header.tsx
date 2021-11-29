@@ -21,7 +21,7 @@ import { Settings } from "../Settings";
 export const Header = ({ narrow } : { narrow : boolean }) => {
   const navs = [
     {
-      href: `/asyncart/`,
+      href: `/glaze/`,
       innerNarrow: "About",
       inner: <HomeIcon />,
     }

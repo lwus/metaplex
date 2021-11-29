@@ -1,5 +1,5 @@
 [package]
-name = "asyncart"
+name = "glaze"
 version = "0.0.1"
 authors = [
     "Lawrence Wu <larry.wu@solana.com>",
@@ -9,7 +9,7 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "asyncart"
+name = "glaze"
 
 [features]
 no-entrypoint = []

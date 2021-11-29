@@ -19,7 +19,7 @@ import BN from 'bn.js';
 import {
   getMetadata,
   getTokenWallet,
-  loadAsyncArtProgram,
+  loadGlazeProgram,
 } from './helpers/accounts';
 import {
   loadCache,
@@ -37,10 +37,10 @@ import {
   createLayer,
   createMaster,
   compositeImage,
-  getAsyncArtMeta,
-  getAsyncArtMint,
+  getGlazeMeta,
+  getGlazeMint,
   pasteRGBImage,
-} from './helpers/asyncart/create';
+} from './helpers/glaze/create';
 
 program.version('0.0.1');
 
@@ -73,7 +73,7 @@ programCommand('upload')
     files = files.map(f => path.join(path.dirname(options.file), f));
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+    const anchorProgram = await loadGlazeProgram(wallet, options.env);
 
     const savedContent = loadCache(options.cacheName, options.env);
     const cacheContent = savedContent || {};
@@ -194,7 +194,7 @@ programCommand('create')
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+    const anchorProgram = await loadGlazeProgram(wallet, options.env);
 
     const base = loadWalletKey(options.base);
 
@@ -232,7 +232,7 @@ programCommand('create')
       throw new Error(`Could not find URI ${masterURI} in cached state`);
     }
 
-    if (!await onChain((await getAsyncArtMeta(base.publicKey))[0])) {
+    if (!await onChain((await getGlazeMeta(base.publicKey))[0])) {
       log.info(`Creating master metadata`);
       const masterMetadata = await (await fetch(schema.uri)).json();
       const instr = await createMaster(
@@ -258,7 +258,7 @@ programCommand('create')
       }
 
       const layerIndexBuffer = Buffer.from(new BN(layerIndex).toArray("le", 8));
-      const [layerKey, ] = await getAsyncArtMeta(base.publicKey, layerIndexBuffer);
+      const [layerKey, ] = await getGlazeMeta(base.publicKey, layerIndexBuffer);
       if (!await onChain(layerKey)) {
         log.info(`Creating layer ${layerIndex} metadata`);
         const layerMetadata = await (await fetch(layer.uri)).json();
@@ -288,7 +288,7 @@ programCommand('create')
         // TODO: a bit inconsistent that we use the mint here but no direct
         // metadata for the image
         const imageIndexBuffer = Buffer.from(new BN(imageIndex).toArray("le", 8));
-        if (!await onChain((await getAsyncArtMint(layerKey, imageIndexBuffer))[0])) {
+        if (!await onChain((await getGlazeMint(layerKey, imageIndexBuffer))[0])) {
           log.info(`Creating image ${imageIndex} of layer ${layerIndex} metadata`);
           const imageMetadata = await (await fetch(image.uri)).json();
           const instr = await createImage(
@@ -322,7 +322,7 @@ programCommand('composite_image')
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+    const anchorProgram = await loadGlazeProgram(wallet, options.env);
 
     const base = new PublicKey(options.base);
 
@@ -340,7 +340,7 @@ programCommand('paste_rgb_image')
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+    const anchorProgram = await loadGlazeProgram(wallet, options.env);
 
     const base = new PublicKey(options.base);
 
@@ -371,17 +371,17 @@ programCommand('update_layer_value')
     }
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+    const anchorProgram = await loadGlazeProgram(wallet, options.env);
 
     const base = new PublicKey(options.base);
 
     const layerIndexBuffer = Buffer.from(new BN(layer).toArray("le", 8));
-    const [layerKey, layerBump] = await getAsyncArtMeta(base, layerIndexBuffer);
+    const [layerKey, layerBump] = await getGlazeMeta(base, layerIndexBuffer);
 
     {
       // check that this image exists...
       const imageIndexBuffer = Buffer.from(new BN(value).toArray("le", 8));
-      const [imageMintKey, ] = await getAsyncArtMint(layerKey, imageIndexBuffer);
+      const [imageMintKey, ] = await getGlazeMint(layerKey, imageIndexBuffer);
 
       const imageMetadataKey = await getMetadata(imageMintKey);
       const imageMetadataAccount = await anchorProgram.provider.connection.getAccountInfo(imageMetadataKey);
@@ -391,7 +391,7 @@ programCommand('update_layer_value')
       }
     }
 
-    const [mintKey, mintBump] = await getAsyncArtMint(base, layerIndexBuffer);
+    const [mintKey, mintBump] = await getGlazeMint(base, layerIndexBuffer);
 
     const walletTokenKey = await getTokenWallet(wallet.publicKey, mintKey);
 
@@ -428,7 +428,7 @@ programCommand('create_master')
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+    const anchorProgram = await loadGlazeProgram(wallet, options.env);
 
     const cacheContent = loadCache(options.cacheName, options.env);
 
@@ -476,7 +476,7 @@ programCommand('create_layer')
     }
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadAsyncArtProgram(wallet, options.env);
+    const anchorProgram = await loadGlazeProgram(wallet, options.env);
 
     const cacheContent = loadCache(options.cacheName, options.env);
 
@@ -528,7 +528,7 @@ function programCommand(name: string) {
       `Solana wallet location`,
       '--keypair not provided',
     )
-    .option('-c, --cache-name <string>', 'Cache file name', 'asyncart')
+    .option('-c, --cache-name <string>', 'Cache file name', 'glaze')
     .option('-r, --rpc-url <string>', 'Custom rpc url')
     .option('-l, --log-level <string>', 'log level', setLogLevel);
 }

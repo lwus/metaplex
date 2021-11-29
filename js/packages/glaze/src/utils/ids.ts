@@ -1,14 +1,14 @@
 import { PublicKey } from '@solana/web3.js';
 
-export const ASYNCART_PROGRAM_ID = new PublicKey(
+export const GLAZE_PROGRAM_ID = new PublicKey(
   'Ax22eZWmvg77HAE5eWbvhdzZYLPmv6C8TV28ivasjB5L',
 );
 
-export const ASYNCART_PREFIX = Buffer.from(
-  'asyncart',
+export const GLAZE_PREFIX = Buffer.from(
+  'glaze',
 );
 
-export const ASYNCART_MINT = Buffer.from(
+export const GLAZE_MINT = Buffer.from(
   'mint'
 );
 
