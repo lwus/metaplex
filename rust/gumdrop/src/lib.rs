@@ -680,7 +680,7 @@ fn issue_mint_nft<'info>(
         let rent = &Rent::get()?;
         let mut candy_machine_data: &[u8] = &candy_machine.try_borrow_data()?;
 
-        let candy_machine = CandyMachine::try_deserialize(&mut candy_machine_data)?;
+        let candy_machine = nft_candy_machine::CandyMachine::try_deserialize(&mut candy_machine_data)?;
         let required_rent =
               rent.minimum_balance(metaplex_token_metadata::state::MAX_METADATA_LEN)
             + rent.minimum_balance(metaplex_token_metadata::state::MAX_MASTER_EDITION_LEN);
@@ -1244,27 +1244,6 @@ pub struct ClaimedEvent {
     pub claimant: Pubkey,
     /// Amount of tokens to distribute.
     pub amount: u64,
-}
-
-// TODO: from cargo package...
-#[account]
-#[derive(Default)]
-pub struct CandyMachine {
-    pub authority: Pubkey,
-    pub wallet: Pubkey,
-    pub token_mint: Option<Pubkey>,
-    pub config: Pubkey,
-    pub data: CandyMachineData,
-    pub items_redeemed: u64,
-    pub bump: u8,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct CandyMachineData {
-    pub uuid: String,
-    pub price: u64,
-    pub items_available: u64,
-    pub go_live_date: Option<i64>,
 }
 
 #[error]
