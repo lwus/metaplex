@@ -652,6 +652,37 @@ pub mod gumdrop {
 
         Ok(())
     }
+
+    pub fn recover_update_authority(
+        ctx: Context<RecoverUpdateAuthority>,
+        _bump: u8,
+        wallet_bump: u8,
+    ) -> ProgramResult {
+        let wallet_seeds = [
+            b"Wallet".as_ref(),
+            &ctx.accounts.distributor.key().to_bytes(),
+            &[wallet_bump],
+        ];
+
+        invoke_signed(
+            &metaplex_token_metadata::instruction::update_metadata_accounts(
+                *ctx.accounts.token_metadata_program.key,
+                *ctx.accounts.metadata.key,
+                *ctx.accounts.distributor_wallet.key,
+                Some(*ctx.accounts.new_update_authority.key),
+                None,
+                None,
+            ),
+            &[
+                ctx.accounts.token_metadata_program.to_account_info(),
+                ctx.accounts.metadata.to_account_info(),
+                ctx.accounts.distributor_wallet.to_account_info(),
+            ],
+            &[&wallet_seeds],
+        )?;
+
+        Ok(())
+    }
 }
 
 fn issue_mint_nft<'info>(
@@ -744,6 +775,28 @@ fn issue_mint_nft<'info>(
         remaining_accounts,
         signer_seeds: &[&wallet_seeds],
     })?;
+
+    // point back to the gumdrop authority
+    let mut cm_config_data: &[u8] = &candy_machine_config.try_borrow_data()?;
+    let cm_config = nft_candy_machine::Config::try_deserialize(&mut cm_config_data)?;
+    if cm_config.data.retain_authority {
+        invoke_signed(
+            &metaplex_token_metadata::instruction::update_metadata_accounts(
+                *token_metadata_program.key,
+                *candy_machine_metadata.key,
+                *distributor_wallet.key,
+                Some(distributor.base),
+                None,
+                None,
+            ),
+            &[
+                token_metadata_program.to_account_info(),
+                candy_machine_metadata.to_account_info(),
+                distributor_wallet.to_account_info(),
+            ],
+            &[&wallet_seeds],
+        )?;
+    }
 
     Ok(())
 }
@@ -1178,6 +1231,48 @@ pub struct ClaimCandyProven<'info> {
 
     rent: Sysvar<'info, Rent>,
     clock: Sysvar<'info, Clock>,
+}
+
+/// [gumdrop::recover_update_authority] accounts.
+#[derive(Accounts)]
+#[instruction(_bump: u8, wallet_bump: u8)]
+pub struct RecoverUpdateAuthority<'info> {
+    /// Base key of the distributor.
+    pub base: Signer<'info>,
+
+    /// [MerkleDistributor].
+    #[account(
+        seeds = [
+            b"MerkleDistributor".as_ref(),
+            base.key().to_bytes().as_ref()
+        ],
+        bump = _bump,
+    )]
+    pub distributor: Account<'info, MerkleDistributor>,
+
+    /// The [MerkleDistributor] wallet
+    #[account(
+        seeds = [
+            b"Wallet".as_ref(),
+            distributor.key().to_bytes().as_ref()
+        ],
+        bump = wallet_bump,
+    )]
+    pub distributor_wallet: AccountInfo<'info>,
+
+    /// New update authority
+    pub new_update_authority: AccountInfo<'info>,
+
+    /// Metadata account to update authority for
+    #[account(mut)]
+    pub metadata: AccountInfo<'info>,
+
+    /// The [System] program.
+    pub system_program: Program<'info, System>,
+
+    /// SPL [TokenMetadata] program.
+    // #[account(address = metaplex_token_metadata::id())]
+    pub token_metadata_program: AccountInfo<'info>,
 }
 
 /// State for the account which distributes tokens.
