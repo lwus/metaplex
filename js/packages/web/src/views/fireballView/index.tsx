@@ -977,6 +977,8 @@ export const FireballView = (
     const recipeATA = await getAssociatedTokenAccount(
         recipeMintOwner, masterMintKey);
 
+    const recipeData = await program.account.recipe.fetch(recipeKey) as any;
+
     const newMint = Keypair.generate();
     const newMetadataKey = await getMetadata(newMint.publicKey);
     const masterMetadataKey = await getMetadata(masterMintKey);
@@ -1023,7 +1025,7 @@ export const FireballView = (
           metadataNewMintAuthority: anchorWallet.publicKey,
           metadataMasterTokenOwner: recipeMintOwner,
           metadataMasterTokenAccount: recipeATA,
-          metadataNewUpdateAuthority: anchorWallet.publicKey,
+          metadataNewUpdateAuthority: recipeData.authority,
           metadataMasterMetadata: masterMetadataKey,
           metadataMasterMint: masterMintKey,
           systemProgram: SystemProgram.programId,

@@ -933,6 +933,7 @@ export const Redeem = (
     }
 
     const recipeKey = new PublicKey(recipe);
+    const recipeData = await program.account.recipe.fetch(recipeKey) as any;
     const [dishKey, ] = await PublicKey.findProgramAddress(
       [
         FIREBALL_PREFIX,
@@ -999,7 +1000,7 @@ export const Redeem = (
           metadataNewMintAuthority: anchorWallet.publicKey,
           metadataMasterTokenOwner: recipeMintOwner,
           metadataMasterTokenAccount: recipeATA,
-          metadataNewUpdateAuthority: anchorWallet.publicKey,
+          metadataNewUpdateAuthority: recipeData.authority,
           metadataMasterMetadata: masterMetadataKey,
           metadataMasterMint: masterMintKey,
           systemProgram: SystemProgram.programId,

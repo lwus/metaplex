@@ -605,6 +605,7 @@ pub struct MakeDish<'info> {
 
     pub metadata_master_token_account: AccountInfo<'info>,
 
+    #[account(address = recipe.authority)]
     pub metadata_new_update_authority: AccountInfo<'info>,
 
     pub metadata_master_metadata: AccountInfo<'info>,
