@@ -283,8 +283,9 @@ export const ExploreView = (
                 style={{
                 }}
               >
-                {checked3d ? (
-                  <model-viewer
+                {checked3d ?
+                  // @ts-ignore
+                  (<model-viewer
                     alt={r.name}
                     src={r.glb}
                     ar

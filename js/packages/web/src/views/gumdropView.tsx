@@ -386,7 +386,7 @@ export const GumdropView = (
     setIndex(params.index as string || "");
     setPin(params.pin as string || "");
     setProof(params.proof as string || "");
-    setCommMethod(params.method || "aws-email");
+    setCommMethod(params.method as string || "aws-email");
   }, [query]);
 
   const [editable, setEditable] = React.useState(false);
