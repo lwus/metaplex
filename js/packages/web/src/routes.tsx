@@ -25,27 +25,107 @@ const ScrollToTop = ({ history }) => {
 const RouterScrollToTop = withRouter(ScrollToTop);
 
 export function Routes() {
-  const ingredients = {
-    "airplane"           : "https://www.arweave.net/84UaRlQ7lIM6rjGodFsruqNNAoOBt6dBoJ-eHv9Fr50?ext=gif",
-    "bull"               : "https://www.arweave.net/GfSyYWWgOIY3llKsU9CiR_sUKNlIBaE1-Wnx_JgvaC4?ext=gif",
-    "duck with doughnut" : "https://www.arweave.net/4M30mRpOwq9M1DrlMAUipUAaAPsCeMLm8gTSDXo_rmI?ext=gif",
-    "hot air balloon"    : "https://www.arweave.net/_mNWVadW1eA5Be3qJlDJeY5qc5tcfL0VdwJ7mc2oxgU?ext=gif",
-    "house"              : "https://www.arweave.net/StFWkC5bN_vMuY6oluIlJbFMPsCL-6Q93aVCobrA_mM?ext=gif",
-    "normal duck"        : "https://www.arweave.net/PJySMI3c2s-DFvJ_ruRrCScsNJiUDiJsu9J6haeWaww?ext=gif",
-    "rocket"             : "https://www.arweave.net/tWQYjhOarxQbQvF9eGRUnI3S-vaWd8Qj7ag7CmiVRqk?ext=gif",
-    "sailboat"           : "https://www.arweave.net/RIkpf6zSCcFLi6KetJrnwd5feZdlVc9-5E37n58D_H4?ext=gif",
-    "telescope ape"      : "https://www.arweave.net/yxWPmiQY3OBHLn1kWhDOrvuJMNAbkglI3VzrL8xZk1Y?ext=gif",
-    "traincar"           : "https://www.arweave.net/mt_fveAydzly6mEeAUNxDuAWevIe9NPoxBuPoTCDIYY?ext=gif",
-    "ufo"                : "https://www.arweave.net/RNdstwUgOcXc7ognVkUoTjfoO2B3Kp2iZ34m86x6gzw?ext=gif",
-    "umbrella duck"      : "https://www.arweave.net/-ApXoK_X3rlclU-rijXiqU4pm85tggLej4ax3HwsI3U?ext=gif",
-    "whale"              : "https://www.arweave.net/e0VvxBG4VrAmli9v7E0d_JDxqbXohS50D7oExbtzVkg?ext=gif",
+  const ingredients = [
+    {
+      name: 'telescope ape',
+      image: 'https://arweave.net/ymOx2DsrdY3n1DnPVVK6KMFGZKPM_jEeRqaEbnvzZu4',
+      video: 'https://arweave.net/0vGGf0XcKG4rVc4Gadn3aqTv_wiDJaYjdmR7ZlPivpU',
+      glb: 'https://arweave.net/v_Gy-Y6faW8kXescQwUYR3OL8YGlXmbBu3scIx8IKpY',
+      metadata: 'https://arweave.net/DMcea0fJpLAHiJy3ox5jS1YLEoJbLb9gq1r4qBBk854'
+    },
+    {
+      name: 'whale',
+      image: 'https://arweave.net/psryXBsGPnrElUPN3Z5XHgeuBEWoUxaG3ghPpbO69lM',
+      video: 'https://arweave.net/aAjO5GtnS8uG42eaU3h4XHxybIULUg-eQs3IAJw2tu8',
+      glb: 'https://arweave.net/DgBp36F40OCAMqKgGBVSsyaqfheFg-AHnj2BW3vLwP8',
+      metadata: 'https://arweave.net/pF7lUmndha0L9LRxG4-Xcl5DbabvZeeibNO979NrShM'
+    },
+    {
+      name: 'bull',
+      image: 'https://arweave.net/vhclFB2oidkAmR2z999sEROV7VM3HRy9PGUqKIQcZEU',
+      video: 'https://arweave.net/R05wYn8H_0F1FA4sc1vn2PlLpFsnrqSusReXGX1zBTg',
+      glb: 'https://arweave.net/3g2rh59KBphgTmYcVHeI6HuSto0Nvs1F31-tldi4gB0',
+      metadata: 'https://arweave.net/Wdndvlrk5DbeM8XPAeFJzZfynvAvCdCBMHS3e_WoaY0'
+    },
+    {
+      name: 'normal duck',
+      image: 'https://arweave.net/RDz_0logP8e6p6ol9xrw3SmLV1I6KmTy0AZrsLKkWrE',
+      video: 'https://arweave.net/PSLQ-1X9SNwZZmNOoCEpXhEYywX_RlDp2vrqHB8EtLU',
+      glb: 'https://arweave.net/La3ktPm1PsD4sgHVqBL3KSXRT0wRLZKS151stHwZAEo',
+      metadata: 'https://arweave.net/WSY67pv8pd6tJp9BU-_zYpNImGSkGCHmF-ff1VqhFo4'
+    },
+    {
+      name: 'duck with doughnut',
+      image: 'https://arweave.net/SKCClZwNA07BQDqmuixW-OtNrQKfZ9ol0CVzFbeNDag',
+      video: 'https://arweave.net/sSoxDL9iBSjmoMf9-9Sv6ohlTPyEnWvbQTIg6DsHAOM',
+      glb: 'https://arweave.net/QsaM2fTM82aCcqLi6_T8vFgk6_tdlVtU3e3uXUiK6cs',
+      metadata: 'https://arweave.net/gJMTWAJ2LV_ienxkUJ4JvXECA2u6cu7_gIEWSShhqLk'
+    },
+    {
+      name: 'traincar',
+      image: 'https://arweave.net/N78BFS24YXUiDwvNmNHoy1jTRaD6jFXH1rYF7fnJRNk',
+      video: 'https://arweave.net/oglvSxkbRWPcUd1t44gunYOY3j42ThZ10j3Vzl4d5qE',
+      glb: 'https://arweave.net/7YbA-XpLYA1aWOQVX2xuE5pIw7PBylfU5Gx0Rs4pDdw',
+      metadata: 'https://arweave.net/WzjJRrPFmZRzaWqMSI2kedNwLhnvbIPb33yyjYZBmYE'
+    },
+    {
+      name: 'rocket',
+      image: 'https://arweave.net/wFN4vNd4L1hBUZUmzSX3PraW59decuPEEz0BzT_3oXA',
+      video: 'https://arweave.net/nDAUGj7dbpwQnk3QwkzijjRwzjM6QSQI4xiAoHmyQqY',
+      glb: 'https://arweave.net/PBaan2clkF2Omqgo7z9hZWPaYzhIHtqDCCqATEOnhRo',
+      metadata: 'https://arweave.net/gC-ybOJbnQ_Rk-xm8dPw-tGGqe1XOIumc8f9Dnlb9tY'
+    },
+    {
+      name: 'umbrella duck',
+      image: 'https://arweave.net/qpvDvGSOsQWEW96ktkJHnIx2F_LcwedEqCAjkEWB4f4',
+      video: 'https://arweave.net/DKJgCKkQgDiRKQteUp6KL9Gzc5buhWWQ0PrpjGgLlCY',
+      glb: 'https://arweave.net/dIg0pfgg1gfPnLUd7jw2nPTB9RAXGm3dpaBsVTcNMQw',
+      metadata: 'https://arweave.net/D_F0mbjYzZwW2H-XYxq0ZxRubbPCZRvLmRuwLQKNKBo'
+    },
+    {
+      name: 'hot air balloon',
+      image: 'https://arweave.net/6_Ktuj-jbl1_ak9X3R1HjAsvf2Z_1fM-BvQiaiLcrQ0',
+      video: 'https://arweave.net/LOGY3hc6Az3mzCMZFMZ5HNDLMHPPxT_H97J3XUIHCWo',
+      glb: 'https://arweave.net/aoQXjSXGNNAKohBn0MdvtoPrqVFLmnWV4IcV7wDq6EU',
+      metadata: 'https://arweave.net/LuTNk7x2rOpU4jmKS6qkn_eiJ6lABIF1D1zOOMY-wTo'
+    },
+    {
+      name: 'airplane',
+      image: 'https://arweave.net/Pb1Su7IcqNjkFsJ34EGTqgjBkYeRQ6HnjYpPGOhb3Iw',
+      video: 'https://arweave.net/gj0XZqZe5Dxxjtyj0fqg143fjPsuW168WJOfdfprHSo',
+      glb: 'https://arweave.net/GgmzJyuzIPbZ8sYWa-soOcTrhsig1diOBXU-zyP5tcQ',
+      metadata: 'https://arweave.net/eZ_Kh52C9RIm3BAIfKqp6l3D0hskshp8CXOdxhtN8-c'
+    },
+    {
+      name: 'house',
+      image: 'https://arweave.net/7b1Srv_ogJ3iISregNpCM0sZEbvIfQwzpVijA1Fepfc',
+      video: 'https://arweave.net/fhUspVS9D6fZMF9-1was5-PSSTgDJjwGq11wMoEFYCc',
+      glb: 'https://arweave.net/k1S_u81y031sEXDQXKjd0xVSw_LlZGrT5a4RD6vfUQE',
+      metadata: 'https://arweave.net/2AEHAKZ7hj5KIXXqBxzvd3Y3TAJIy7RBFQl-MkA_Ovk'
+    },
+    {
+      name: 'sailboat',
+      image: 'https://arweave.net/nbWR_WTky3H7GgoSCw6Epx9WHNGor-Fnogcbq4twHLY',
+      video: 'https://arweave.net/zk-GuOVS5JlwsrvEfZEzfQpGp7_4PhWKASh6JRT0wNE',
+      glb: 'https://arweave.net/FoLJsWDpxSyJsvG0LdNaXYHMq5sNcbEY4Yi9u4t3OEE',
+      metadata: 'https://arweave.net/gAjOv5TkfmVWNpc9oqb_RXsIrKROFqqOvgyE-RAXS4c'
+    },
+    {
+      name: 'ufo',
+      image: 'https://arweave.net/IdCg_A_qH4fzd9TNbIRiogDglO4z9fGHK9vrqMtI1mM',
+      video: 'https://arweave.net/bZZVQQ6Oa8XoSLbtPt_i-lHI5BCv0t_GxofERZeI3K8',
+      glb: 'https://arweave.net/6oKs-NkzzYa1GLLRzhzT-ub4yjwKPQM9Koac2T9GyPQ',
+      metadata: 'https://arweave.net/lqYPBAGAs_Z9B_Hb7gIWwmVivtthTcVqxI2Ha_B_G6w'
+    }
+  ]
+
+  const reduceIngredients = (v) => {
+    return v.reduce((acc, i) => ({ ...acc, [i.name]: i.image }), {});
   };
 
   const ingredientSubset = (subset : Array<string>) => {
-    return Object.keys(ingredients)
-      .filter(i => { return subset.includes(i); })
-      .reduce((acc, i) => ({ ...acc, [i]: ingredients[i] }), {})
-      ;
+    return reduceIngredients(ingredients
+      .filter(i => { return subset.includes(i.name); }));
   };
 
   const pathForYield = (y) => {
@@ -98,7 +178,7 @@ export function Routes() {
                 <FireballView
                   recipeKey={new PublicKey("HHNbiYDEAJ2PXv5GZXXrn2Ypi1s8CfZK4asgnpg6MSUi")}
                   recipeYields={cityYields}
-                  ingredients={ingredients}
+                  ingredients={reduceIngredients(ingredients)}
                 />
               )
             } />
@@ -108,7 +188,7 @@ export function Routes() {
                   <FireballView
                     recipeKey={new PublicKey("HHNbiYDEAJ2PXv5GZXXrn2Ypi1s8CfZK4asgnpg6MSUi")}
                     recipeYields={[y]}
-                    ingredients={ingredients}
+                    ingredients={reduceIngredients(ingredients)}
                   />
                 )
               } />
@@ -157,6 +237,7 @@ export function Routes() {
                       }
                     ],
                   ]}
+                  ingredients={ingredients}
                 />
               )
             } />

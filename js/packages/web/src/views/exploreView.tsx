@@ -10,7 +10,9 @@ import {
   ImageListItem,
   ImageListItemBar,
   Stack,
+  Switch,
 } from "@mui/material";
+import { alpha, styled } from '@mui/material/styles';
 
 import {
   Connection as RPCConnection,
@@ -45,10 +47,22 @@ export type RecipeLink = {
   link?: string,
 };
 
+const PurpleSwitch = styled(Switch)(({ theme }) => ({
+  '& .MuiSwitch-switchBase.Mui-checked': {
+    color: "#b480eb",
+    '&:hover': {
+      backgroundColor: alpha("#b480eb", theme.palette.action.hoverOpacity),
+    },
+  },
+  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+    backgroundColor: "#b480eb",
+  },
+}));
 
 export const ExploreView = (
   props: {
     recipeYields: Array<RecipeLink>,
+    ingredients: Array<any>,
   },
 ) => {
   const { endpoint } = useConnectionConfig();
@@ -59,6 +73,7 @@ export const ExploreView = (
 
   const { loading, setLoading } = useLoading();
 
+  const [checked3d, setChecked3d] = React.useState(true);
   const [editionsRemaining, setEditionsRemaining] = React.useState([]);
 
   React.useEffect(() => {
@@ -240,6 +255,59 @@ export const ExploreView = (
                   </Link>}
                 </Button>
                 </span>
+              </ImageListItem>
+            </div>
+          );
+        })}
+      </ImageList>
+      <p className={"text-title"}>
+        The OGs
+      </p>
+      <p className={"text-subtitle"}>
+        View in 3D!
+        <PurpleSwitch
+          checked={checked3d}
+          onChange={e => setChecked3d(e.target.checked)}
+        />
+      </p>
+      <ImageList cols={cols} gap={columnsGap}>
+        {props.ingredients.map(r => {
+          return (
+            <div
+              key={r.name}
+              style={{
+                minWidth: columnWidth,
+              }}
+            >
+              <ImageListItem
+                style={{
+                }}
+              >
+                {checked3d ? (
+                  <model-viewer
+                    alt={r.name}
+                    src={r.glb}
+                    ar
+                    ar-modes="webxr scene-viewer quick-look"
+                    className={"fullAspectRatio"}
+                    camera-controls
+                    enable-pan
+                    style={{
+                      width: imageWidth,
+                      height: imageWidth,
+                    }}
+                  />
+                ) : (
+                  <CachedImageContent
+                    uri={r.image}
+                    preview={false}
+                    className={"fullAspectRatio"}
+                  />
+                )}
+                <ImageListItemBar
+                  title={r.name}
+                  position="below"
+                />
               </ImageListItem>
             </div>
           );
