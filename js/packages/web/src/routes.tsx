@@ -7,6 +7,7 @@ import { Providers } from './providers';
 import { AppLayout } from './components/Layout';
 import { FireballView } from "./views/fireballView";
 import { ExploreView } from "./views/exploreView";
+import { SwapView } from './views/SwapView';
 
 const ScrollToTop = ({ history }) => {
   React.useEffect(() => {
@@ -215,6 +216,7 @@ export function Routes() {
                 />
               )
             } />
+            <Route path="/swap" component={SwapView} />
             <Route path="/" component={
               () => (
                 <ExploreView
