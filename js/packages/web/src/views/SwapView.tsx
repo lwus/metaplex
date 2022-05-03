@@ -1,19 +1,29 @@
 import React from "react";
 import useWindowDimensions from '../utils/layout';
 import {
-  Box,
-  Chip,
-  Link as HyperLink,
+  IconButton,
   ImageList,
   ImageListItem,
   ImageListItemBar,
   Stack,
-  Switch,
 } from "@mui/material";
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import { useConnection, notify, shortenAddress } from '@oyster/common';
+import * as anchor from '@project-serum/anchor';
+import { PublicKey } from '@solana/web3.js';
+import { useWallet } from "@solana/wallet-adapter-react";
 
 import {
   CachedImageContent,
 } from '../components/ArtContent';
+import {
+  envFor,
+} from '../utils/transactions';
+import {
+  TOKEN_ENTANGLEMENT_PROGRAM_ID,
+} from '../utils/ids';
+
+
 
 const entanglements = [
   {
@@ -23,28 +33,28 @@ const entanglements = [
     pairs: [
       {
         edition: 1,
-        mintA: "9WGUcsZsdegD1YZwp7ACiGf226ZxWTXRskxvM6soWazq",
-        mintB: "6SiZLr5vRdAMWmJRLC63DYs27gHq2gDMQNp3jSV43yrU",
+        mintA: new PublicKey("9WGUcsZsdegD1YZwp7ACiGf226ZxWTXRskxvM6soWazq"),
+        mintB: new PublicKey("6SiZLr5vRdAMWmJRLC63DYs27gHq2gDMQNp3jSV43yrU"),
       },
       {
         edition: 2,
-        mintA: "6qqnX651YSsjPPCjDf4PaKVk69waSfMEVuB5USxppeWk",
-        mintB: "9QCLF2M17HdCLKu7whcV688SkC3g8YhxJiEXxAkPSCaT",
+        mintA: new PublicKey("6qqnX651YSsjPPCjDf4PaKVk69waSfMEVuB5USxppeWk"),
+        mintB: new PublicKey("9QCLF2M17HdCLKu7whcV688SkC3g8YhxJiEXxAkPSCaT"),
       },
       {
         edition: 3,
-        mintA: "HV9DrFAaWBoNqi3bW1Kbu3pkYQ9YBVXEUrvc9WBBVoXd",
-        mintB: "6EUY2rL4kQnw1BShhnaAfV62HRgmgcoVh2CEDUKDPiR5",
+        mintA: new PublicKey("HV9DrFAaWBoNqi3bW1Kbu3pkYQ9YBVXEUrvc9WBBVoXd"),
+        mintB: new PublicKey("6EUY2rL4kQnw1BShhnaAfV62HRgmgcoVh2CEDUKDPiR5"),
       },
       {
         edition: 4,
-        mintA: "AD97f7kJjsBzRx5xL6aTXmWQD7kYejEW14Z3jcxLczDE",
-        mintB: "AMenJXE9h4XjwBsnkUuvcBSxqxmujjxGQCCdixXSJNrN",
+        mintA: new PublicKey("AD97f7kJjsBzRx5xL6aTXmWQD7kYejEW14Z3jcxLczDE"),
+        mintB: new PublicKey("AMenJXE9h4XjwBsnkUuvcBSxqxmujjxGQCCdixXSJNrN"),
       },
       {
         edition: 5,
-        mintA: "BentUWDMka73geHD2qTwokfXoxorb8K8VrtKuZkKE9No",
-        mintB: "HB6ReN7r1tiQ6MXDkkkpTiu5yPahexremSqVSdT2VTYh",
+        mintA: new PublicKey("BentUWDMka73geHD2qTwokfXoxorb8K8VrtKuZkKE9No"),
+        mintB: new PublicKey("HB6ReN7r1tiQ6MXDkkkpTiu5yPahexremSqVSdT2VTYh"),
       },
     ],
   },
@@ -55,13 +65,13 @@ const entanglements = [
     pairs: [
       {
         edition: 1,
-        mintA: "3t8S6FUqtDriWX18K7eGqeUnvjKXR6utqg7GqLfcwKXc",
-        mintB: "AurY6syPcbGxWvsgMQiEcMfjY22YHdDqwLwtGU7hzfWS",
+        mintA: new PublicKey("3t8S6FUqtDriWX18K7eGqeUnvjKXR6utqg7GqLfcwKXc"),
+        mintB: new PublicKey("AurY6syPcbGxWvsgMQiEcMfjY22YHdDqwLwtGU7hzfWS"),
       },
       {
         edition: 2,
-        mintA: "3C6beAkftjvYexRua9heov6qh2t8L3UC81JN85KmPdRx",
-        mintB: "9MCSb2C8mh4BVeWf69f411qNCXyQTrDJDmLUk2QFLqVZ",
+        mintA: new PublicKey("3C6beAkftjvYexRua9heov6qh2t8L3UC81JN85KmPdRx"),
+        mintB: new PublicKey("9MCSb2C8mh4BVeWf69f411qNCXyQTrDJDmLUk2QFLqVZ"),
       },
     ],
   },
@@ -72,8 +82,8 @@ const entanglements = [
     pairs: [
       {
         edition: 1,
-        mintA: "B7T1QJFH1ZczVEB4Y9z6XKQU7vnQWvRGpoEjgg3piMLC",
-        mintB: "92onn8pS3LBLSP6hEMPFCRqESEFLojkFkPmHiKM3KvPN",
+        mintA: new PublicKey("B7T1QJFH1ZczVEB4Y9z6XKQU7vnQWvRGpoEjgg3piMLC"),
+        mintB: new PublicKey("92onn8pS3LBLSP6hEMPFCRqESEFLojkFkPmHiKM3KvPN"),
       },
     ],
   },
@@ -84,73 +94,73 @@ const entanglements = [
     pairs: [
       {
         edition: 14,
-        mintA: "6aa1kP42MzdguucsJbEgcA6u32UfyHdcXqgB7ofgDzPT",
-        mintB: "6DA1aU7tfWw5wnuP6YuscXD3fvLYzagNW9PbpwiS28z6",
+        mintA: new PublicKey("6aa1kP42MzdguucsJbEgcA6u32UfyHdcXqgB7ofgDzPT"),
+        mintB: new PublicKey("6DA1aU7tfWw5wnuP6YuscXD3fvLYzagNW9PbpwiS28z6"),
       },
       {
         edition: 13,
-        mintA: "3CUvSTgizJfacfzxy6Z1MUkNy2oSH57absXM9meUyLhT",
-        mintB: "47vHB9YqdYc8TEhb3rra6JNPxrtDLWsbgSQYZz35R4wJ",
+        mintA: new PublicKey("3CUvSTgizJfacfzxy6Z1MUkNy2oSH57absXM9meUyLhT"),
+        mintB: new PublicKey("47vHB9YqdYc8TEhb3rra6JNPxrtDLWsbgSQYZz35R4wJ"),
       },
       {
         edition: 12,
-        mintA: "7EnejDExTUUh9YA3DMVgsjr5uM4UEaCVqYbfP7S2vpkQ",
-        mintB: "9fuzps9tqAGw1nE5mwznvHsC3k5mFsRM1EteS5JqqRwE",
+        mintA: new PublicKey("7EnejDExTUUh9YA3DMVgsjr5uM4UEaCVqYbfP7S2vpkQ"),
+        mintB: new PublicKey("9fuzps9tqAGw1nE5mwznvHsC3k5mFsRM1EteS5JqqRwE"),
       },
       {
         edition: 11,
-        mintA: "6Y61AW16iiMmCQt9MtXA2dKhat8fsBwJRSm9ZYFEcd9i",
-        mintB: "BjtmUTXLQ4yKx8oCJHPmXVAfDcFh5X6h1wufGzKU36pH",
+        mintA: new PublicKey("6Y61AW16iiMmCQt9MtXA2dKhat8fsBwJRSm9ZYFEcd9i"),
+        mintB: new PublicKey("BjtmUTXLQ4yKx8oCJHPmXVAfDcFh5X6h1wufGzKU36pH"),
       },
       {
         edition: 10,
-        mintA: "2A89DmpzVqKXuV1qwDiNbRDtQuJtp6DXbCNyPKhBcxLk",
-        mintB: "6JcX5b1PcuXiQgGz82GGrXUXiZ24fGfU8q8cbjfp7urm",
+        mintA: new PublicKey("2A89DmpzVqKXuV1qwDiNbRDtQuJtp6DXbCNyPKhBcxLk"),
+        mintB: new PublicKey("6JcX5b1PcuXiQgGz82GGrXUXiZ24fGfU8q8cbjfp7urm"),
       },
       {
         edition: 9,
-        mintA: "5AfYwLWDe1jswXZb8VT5QDyLkBJaoEj9hv6ScTy3pfzz",
-        mintB: "Cc1oqFLV1A9Q2z2haiDwAfJSRvsuN92GGZuQWa4n7cGC",
+        mintA: new PublicKey("5AfYwLWDe1jswXZb8VT5QDyLkBJaoEj9hv6ScTy3pfzz"),
+        mintB: new PublicKey("Cc1oqFLV1A9Q2z2haiDwAfJSRvsuN92GGZuQWa4n7cGC"),
       },
       {
         edition: 8,
-        mintA: "5ijGf7XVxxSeKHePsNJ8LMwdSD2EosBLQxi9yjcQCVbz",
-        mintB: "DNfi28rPLBVpWE9zkSTGdbNeYEqAvKzxKhkFHHCU7C75",
+        mintA: new PublicKey("5ijGf7XVxxSeKHePsNJ8LMwdSD2EosBLQxi9yjcQCVbz"),
+        mintB: new PublicKey("DNfi28rPLBVpWE9zkSTGdbNeYEqAvKzxKhkFHHCU7C75"),
       },
       {
         edition: 7,
-        mintA: "FLwCoEiaeqZ5XRZB7KFjLEAY6HnMQuYx2egNceCc1RDJ",
-        mintB: "2MrnT1gjphTLxJNjZT7QXT44fZjjTNUTDrgU4E5cDaRa",
+        mintA: new PublicKey("FLwCoEiaeqZ5XRZB7KFjLEAY6HnMQuYx2egNceCc1RDJ"),
+        mintB: new PublicKey("2MrnT1gjphTLxJNjZT7QXT44fZjjTNUTDrgU4E5cDaRa"),
       },
       {
         edition: 6,
-        mintA: "5zE6F7pFpGyEziyGWrX3nJdSpsEqP5pyaxvNDDbfZhD5",
-        mintB: "J9JBiYKAB1ZHJB71yVfvvDzrnvw5mk62TxvfR5PNfzbp",
+        mintA: new PublicKey("5zE6F7pFpGyEziyGWrX3nJdSpsEqP5pyaxvNDDbfZhD5"),
+        mintB: new PublicKey("J9JBiYKAB1ZHJB71yVfvvDzrnvw5mk62TxvfR5PNfzbp"),
       },
       {
         edition: 5,
-        mintA: "GqGXTPLHN3M5mNUsBv156eAvsX4kjQcHhDV3nqUpwG3T",
-        mintB: "2bcokg3NZ3YMFra748zAY7E56GTcdv2RRAioweqFCkNV",
+        mintA: new PublicKey("GqGXTPLHN3M5mNUsBv156eAvsX4kjQcHhDV3nqUpwG3T"),
+        mintB: new PublicKey("2bcokg3NZ3YMFra748zAY7E56GTcdv2RRAioweqFCkNV"),
       },
       {
         edition: 4,
-        mintA: "6PEskoXZtGKZRgqEL9RunQC1P4tipeoB2QsCpYyS5dUM",
-        mintB: "3YbAdn8QTgijY5yCHxcjEwaBtPtgL5kFY6LhUCKEwrGg",
+        mintA: new PublicKey("6PEskoXZtGKZRgqEL9RunQC1P4tipeoB2QsCpYyS5dUM"),
+        mintB: new PublicKey("3YbAdn8QTgijY5yCHxcjEwaBtPtgL5kFY6LhUCKEwrGg"),
       },
       {
         edition: 3,
-        mintA: "S6C5s4AHaFxiGvj5L1JNptoG95fCFSCzLLpGGhRqdGh",
-        mintB: "32mQ9778oRXmDxLPVfgNqQunUL67G5AYrGp3sRtEV9Y6",
+        mintA: new PublicKey("S6C5s4AHaFxiGvj5L1JNptoG95fCFSCzLLpGGhRqdGh"),
+        mintB: new PublicKey("32mQ9778oRXmDxLPVfgNqQunUL67G5AYrGp3sRtEV9Y6"),
       },
       {
         edition: 2,
-        mintA: "EavxtZYmTCLed7ShCPLLVbg4YBFtcqN5WGwyUEJtshd4",
-        mintB: "ymTbjqvNUo9xFRGD89eKhUM6sHRxPihCTyP3G2vGtDA",
+        mintA: new PublicKey("EavxtZYmTCLed7ShCPLLVbg4YBFtcqN5WGwyUEJtshd4"),
+        mintB: new PublicKey("ymTbjqvNUo9xFRGD89eKhUM6sHRxPihCTyP3G2vGtDA"),
       },
       {
         edition: 1,
-        mintA: "3qjo19UiFaWZEdZCixH2ADebpHTABQp16JfXiRdpBGUu",
-        mintB: "6RFoyNMoxax22gPJr8rR7d3rQ8sU2bo4s8FCYd43Vroa",
+        mintA: new PublicKey("3qjo19UiFaWZEdZCixH2ADebpHTABQp16JfXiRdpBGUu"),
+        mintB: new PublicKey("6RFoyNMoxax22gPJr8rR7d3rQ8sU2bo4s8FCYd43Vroa"),
       },
     ]
   },
@@ -161,24 +171,63 @@ const entanglements = [
     pairs: [
       {
         edition: 3,
-        mintA: "4zoKQanNtzJsCmWnH36aSw91ZHLXrLa5Xfe8xXHwTZnR",
-        mintB: "52WYhZ6sKTdzk9dDqkFKBQp5WBUmpmDo3k49pkLt5gxZ",
+        mintA: new PublicKey("4zoKQanNtzJsCmWnH36aSw91ZHLXrLa5Xfe8xXHwTZnR"),
+        mintB: new PublicKey("52WYhZ6sKTdzk9dDqkFKBQp5WBUmpmDo3k49pkLt5gxZ"),
       },
       {
         edition: 2,
-        mintA: "4SnpnbuwBbh29Ts13JhhpGjkvgmWi2Xriknm8mpMTdCy",
-        mintB: "7SzLVw9fs2ztEEJ5S7K9D4EPMmpr1URHgWzjAyyfciw5",
+        mintA: new PublicKey("4SnpnbuwBbh29Ts13JhhpGjkvgmWi2Xriknm8mpMTdCy"),
+        mintB: new PublicKey("7SzLVw9fs2ztEEJ5S7K9D4EPMmpr1URHgWzjAyyfciw5"),
       },
       {
         edition: 1,
-        mintA: "GzAbFfG6T3k4AtK5jRtDJZ6Ju6iDo6sTbsAAjYh8VsVm",
-        mintB: "HGinUtX9ERUpkmfATbpTQPi2kBmazH7nUyXmMATkWHWg",
+        mintA: new PublicKey("GzAbFfG6T3k4AtK5jRtDJZ6Ju6iDo6sTbsAAjYh8VsVm"),
+        mintB: new PublicKey("HGinUtX9ERUpkmfATbpTQPi2kBmazH7nUyXmMATkWHWg"),
       },
     ]
   },
 ];
 
+export const MonospacedPublicKey = ({ address }: { address: PublicKey }) => {
+  const connection = useConnection();
+  return (
+    <a
+      href={`https://explorer.solana.com/address/${address.toBase58()}?cluster=${envFor(connection)}`}
+      target="_blank"
+      rel="noreferrer"
+      title={address.toBase58()}
+      underline="none"
+    >
+      <span style={{ fontFamily: 'Monospace' }}>
+        {shortenAddress(address.toBase58())}
+      </span>
+    </a>
+  );
+}
+
 export const SwapView = () => {
+  const wallet = useWallet();
+  const connection = useConnection();
+  const [program, setProgram] = React.useState<anchor.Program | null>(null);
+
+  React.useEffect(() => {
+    const wrap = async () => {
+      try {
+        setProgram(await anchor.Program.at(
+          TOKEN_ENTANGLEMENT_PROGRAM_ID,
+          new anchor.Provider(connection, null as any, {})
+        ));
+      } catch (err) {
+        console.error(err);
+        notify({
+          message: `Failed to fetch anchor IDL ${TOKEN_ENTANGLEMENT_PROGRAM_ID.toBase58()}`,
+          description: `${err.message}`,
+        });
+        return null;
+      }
+    };
+    wrap();
+  }, []);
 
   // TODO: more robust
   const maxWidth = 960;
@@ -228,6 +277,31 @@ export const SwapView = () => {
                 <ImageListItemBar
                   title={r.name}
                   position="below"
+                  subtitle={r.pairs.map(p => {
+                    return (
+                      <div key={p.edition}>
+                      <div
+                        key={p.edition}
+                        style={{
+                          width: '100%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <MonospacedPublicKey address={p.mintA} />
+                        <IconButton
+                          style={{
+                            color: 'white',
+                          }}
+                        >
+                          <SwapHorizIcon />
+                        </IconButton>
+                        <MonospacedPublicKey address={p.mintB} />
+                      </div>
+                      </div>
+                    );
+                  })}
                 />
               </ImageListItem>
             </div>
