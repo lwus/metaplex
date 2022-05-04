@@ -485,11 +485,11 @@ export const SwapView = () => {
     return (
       <>
         <div style={{ paddingTop: 12 }}>
-          {matching.map(p => <EntangledPair {...p} disabled={false} />)}
+          {matching.map(p => <EntangledPair key={p.edition} {...p} disabled={false} />)}
         </div>
         <Collapse>
           <Collapse.Panel header="Other entanglements" key="1">
-            {nonMatching.map(p => <EntangledPair {...p} disabled={true} />)}
+            {nonMatching.map(p => <EntangledPair key={p.edition} {...p} disabled={true} />)}
           </Collapse.Panel>
         </Collapse>
       </>
