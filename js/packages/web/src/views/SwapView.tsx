@@ -8,14 +8,29 @@ import {
   Stack,
 } from "@mui/material";
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import { useConnection, notify, shortenAddress, decodeMetadata } from '@oyster/common';
+import {
+  useConnection,
+  notify,
+  shortenAddress,
+  decodeMetadata,
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  WRAPPED_SOL_MINT,
+  Metadata,
+} from '@oyster/common';
 import * as anchor from '@project-serum/anchor';
 import {
+  AccountMeta,
   PublicKey,
   SystemProgram,
+  Transaction,
   SYSVAR_RENT_PUBKEY,
 } from '@solana/web3.js';
+import {
+  AccountLayout,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
 import { useWallet } from "@solana/wallet-adapter-react";
+import BN from 'bn.js';
 
 import {
   CachedImageContent,
@@ -23,11 +38,11 @@ import {
 import { useLoading } from '../components/Loader';
 import {
   envFor,
+  explorerLinkFor,
+  sendSignedTransaction,
 } from '../utils/transactions';
 import {
   TOKEN_ENTANGLEMENT_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-  WRAPPED_SOL_MINT,
 } from '../utils/ids';
 import {
   getAssociatedTokenAccount,
@@ -206,7 +221,7 @@ export const MonospacedPublicKey = ({ address }: { address: PublicKey }) => {
       target="_blank"
       rel="noreferrer"
       title={address.toBase58()}
-      underline="none"
+      // style={{ underline: 'none' }}
     >
       <span style={{ fontFamily: 'Monospace' }}>
         {shortenAddress(address.toBase58())}
@@ -286,6 +301,7 @@ export const SwapView = () => {
   const SwapButton = (props) => {
     return (
       <IconButton
+        disabled={!program || !wallet.publicKey}
         style={{
           color: 'white',
         }}
@@ -293,22 +309,27 @@ export const SwapView = () => {
           setLoading(true);
           const wrap = async () => {
             console.log(props);
+
+            const walletKey = wallet.publicKey;
+            if (!program || !walletKey) {
+              return;
+            }
+
             const [epKey] = await getTokenEntanglement(props.mintA, props.mintB);
-            const epObj = await program.account.entangledPair.fetch(epKey);
+            const epObj = await program.account.entangledPair.fetch(epKey) as any;
             if (!epObj.mintA.equals(props.mintA)
                 || !epObj.mintB.equals(props.mintB)
                 || !epObj.treasuryMint.equals(WRAPPED_SOL_MINT)) {
               throw new Error(`Entanglement ${shortenAddress(epKey.toBase58())} seems misconfigured!`);
             }
 
-            const walletKey = wallet.publicKey;
             const aATA = await getAssociatedTokenAccount(walletKey, epObj.mintA);
             const bATA = await getAssociatedTokenAccount(walletKey, epObj.mintB);
             const aATAInfo = await connection.getAccountInfo(aATA);
             const aTokens = new BN(aATAInfo ? AccountLayout.decode(aATAInfo.data).amount : 0);
 
             let token, replacementToken, tokenMint, replacementTokenMint;
-            if (aTokens.equals(new BN(0))) {
+            if (aTokens.eq(new BN(0))) {
               token = bATA;
               tokenMint = epObj.mintB;
               replacementToken = aATA;
@@ -325,10 +346,14 @@ export const SwapView = () => {
 
             const tokenMetadata = await getMetadata(tokenMint);
             const metadataObj = await connection.getAccountInfo(tokenMetadata);
+            if (!metadataObj) {
+              // really shouldn't be possible since entanglement wouldn't exist eighet
+              throw new Error(`Could not fetch metadata for token ${tokenMint.toBase58()}`);
+            }
             const metadataDecoded: Metadata = decodeMetadata(metadataObj.data);
 
-            const remainingAccounts = [];
-            for (const creator of metadataDecoded.data.creators) {
+            const remainingAccounts: Array<AccountMeta> = [];
+            for (const creator of (metadataDecoded.data.creators || [])) {
               remainingAccounts.push({
                 pubkey: new PublicKey(creator.address),
                 isWritable: true,
@@ -336,13 +361,13 @@ export const SwapView = () => {
               });
             }
 
-            const instruction = await anchorProgram.instruction.swap({
+            const instruction = await program.instruction.swap({
               accounts: {
                 treasuryMint: epObj.treasuryMint,
                 payer: walletKey,
                 paymentAccount: walletKey,
                 paymentTransferAuthority: walletKey,
-                transferAuthority: transferAuthority.publicKey,
+                transferAuthority: walletKey,
                 token,
                 tokenMetadata,
                 replacementToken,
@@ -352,14 +377,14 @@ export const SwapView = () => {
                 entangledPair: epKey,
                 tokenProgram: TOKEN_PROGRAM_ID,
                 systemProgram: SystemProgram.programId,
-                ataProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                ataProgram: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
                 rent: SYSVAR_RENT_PUBKEY,
               },
               remainingAccounts,
             });
 
             const recentBlockhash = (
-              await connection.getLatestBlockhash('confirmed')
+              await connection.getRecentBlockhash('confirmed')
             ).blockhash;
             console.log('blockhash', recentBlockhash);
             const tx = new Transaction({
