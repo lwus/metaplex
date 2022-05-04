@@ -8,6 +8,7 @@ import {
   Stack,
 } from "@mui/material";
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import { Collapse } from 'antd';
 import {
   useConnection,
   notify,
@@ -279,6 +280,8 @@ export const SwapView = () => {
 
   const { setLoading } = useLoading();
 
+  const [relevantMints, setRelevantMints] = React.useState<Array<PublicKey>>([]);
+
   React.useEffect(() => {
     const wrap = async () => {
       try {
@@ -298,10 +301,30 @@ export const SwapView = () => {
     wrap();
   }, []);
 
+  const entangledMints: Array<PublicKey> = React.useMemo(() =>
+    entanglements.map(e => e.pairs.map(p => [p.mintA, p.mintB]).flat()).flat(), []);
+
+  React.useEffect(() => {
+    const wrap = async () => {
+      if (!wallet.publicKey) return;
+      const owned = await connection.getTokenAccountsByOwner(
+        wallet.publicKey,
+        { programId: TOKEN_PROGRAM_ID },
+      );
+
+      const decoded = owned.value.map(v => AccountLayout.decode(v.account.data));
+      const matching = decoded.filter(
+          acc => entangledMints.findIndex(e => e.equals(new PublicKey(acc.mint))) !== -1)
+        .map(acc => new PublicKey(acc.mint));
+      setRelevantMints(matching);
+    };
+    wrap();
+  }, [wallet?.publicKey]);
+
   const SwapButton = (props) => {
     return (
       <IconButton
-        disabled={!program || !wallet.publicKey}
+        disabled={props.disabled|| !program || !wallet.publicKey}
         style={{
           color: 'white',
         }}
@@ -433,6 +456,46 @@ export const SwapView = () => {
     );
   };
 
+  const EntangledList = (props) => {
+    const findPair = p => relevantMints.findIndex(m => m.equals(p.mintA) || m.equals(p.mintB));
+    const matching = props.pairs.filter(p => findPair(p) !== -1);
+    const nonMatching = props.pairs.filter(p => findPair(p) === -1);
+
+    const EntangledPair = (props) => {
+      return (
+        <div key={props.edition}>
+        <div
+          key={props.edition}
+          style={{
+            width: '100%',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: props.disabled ? 'inherit': '16px',
+          }}
+        >
+          <MonospacedPublicKey address={props.mintA} />
+          <SwapButton {...props} />
+          <MonospacedPublicKey address={props.mintB} />
+        </div>
+        </div>
+      );
+    };
+
+    return (
+      <>
+        <div style={{ paddingTop: 12 }}>
+          {matching.map(p => <EntangledPair {...p} disabled={false} />)}
+        </div>
+        <Collapse>
+          <Collapse.Panel header="Other entanglements" key="1">
+            {nonMatching.map(p => <EntangledPair {...p} disabled={true} />)}
+          </Collapse.Panel>
+        </Collapse>
+      </>
+    );
+  };
+
   // TODO: more robust
   const maxWidth = 960;
   const outerPadding = 96 * 2;
@@ -481,25 +544,7 @@ export const SwapView = () => {
                 <ImageListItemBar
                   title={r.name}
                   position="below"
-                  subtitle={r.pairs.map(p => {
-                    return (
-                      <div key={p.edition}>
-                      <div
-                        key={p.edition}
-                        style={{
-                          width: '100%',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <MonospacedPublicKey address={p.mintA} />
-                        <SwapButton {...p} />
-                        <MonospacedPublicKey address={p.mintB} />
-                      </div>
-                      </div>
-                    );
-                  })}
+                  subtitle={<EntangledList pairs={r.pairs} />}
                 />
               </ImageListItem>
             </div>

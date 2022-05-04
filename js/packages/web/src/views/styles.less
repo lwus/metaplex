@@ -442,3 +442,12 @@ h2 {
     color: black;
   }
 }
+
+.ant-collapse, .ant-collapse-header, .ant-collapse-content-box {
+  background-color: black;
+  color: white !important; // specifity of collapse > item > header
+  border: none;
+  .ant-collapse-item {
+    border: none;
+  }
+}
