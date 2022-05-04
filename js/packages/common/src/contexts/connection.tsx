@@ -126,24 +126,6 @@ export function ConnectionProvider({ children }: { children: any }) {
 
   const { current: connection } = useRef(new Connection(endpoint.url));
 
-  const [tokens, setTokens] = useState<Map<string, TokenInfo>>(new Map());
-
-  useEffect(() => {
-    function fetchTokens() {
-      return new TokenListProvider().resolve().then(container => {
-        const list = container
-          .excludeByTag('nft')
-          .filterByChainId(endpoint.chainId)
-          .getList();
-
-        const map = new Map(list.map(item => [item.address, item]));
-        setTokens(map);
-      });
-    }
-
-    fetchTokens();
-  }, []);
-
   useEffect(() => {
     function updateNetworkInLocalStorageIfNeeded() {
       if (networkStorage !== endpoint.name) {
@@ -154,34 +136,13 @@ export function ConnectionProvider({ children }: { children: any }) {
     updateNetworkInLocalStorageIfNeeded();
   }, []);
 
-  // solana/web3.js closes its websocket connection when the subscription list
-  // is empty after opening for the first time, preventing subsequent
-  // subscriptions from receiving responses.
-  // This is a hack to prevent the list from ever being empty.
-  useEffect(() => {
-    const id = connection.onAccountChange(
-      Keypair.generate().publicKey,
-      () => {},
-    );
-    return () => {
-      connection.removeAccountChangeListener(id);
-    };
-  }, []);
-
-  useEffect(() => {
-    const id = connection.onSlotChange(() => null);
-    return () => {
-      connection.removeSlotChangeListener(id);
-    };
-  }, []);
-
   const contextValue = React.useMemo(() => {
     return {
       endpoint,
       connection,
-      tokens,
+      tokens: new Map(),
     };
-  }, [tokens]);
+  }, []);
 
   return (
     <ConnectionContext.Provider value={contextValue}>

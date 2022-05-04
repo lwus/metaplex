@@ -1,5 +1,4 @@
 import {
-  AccountsProvider,
   ConnectionProvider,
   StoreProvider,
   WalletProvider,
@@ -9,7 +8,6 @@ import React, { FC } from 'react';
 import { ConfettiProvider } from './components/Confetti';
 import { LoaderProvider } from './components/Loader';
 import { CoingeckoProvider } from './contexts/coingecko';
-import { SPLTokenListProvider } from './contexts/tokenList';
 import { AnchorContextProvider } from './contexts/anchorContext';
 import { DevModeContextProvider } from './contexts/devModeContext';
 
@@ -17,8 +15,6 @@ export const Providers: FC = ({ children }) => {
   return (
     <ConnectionProvider>
       <WalletProvider>
-        <AccountsProvider>
-          <SPLTokenListProvider>
             <CoingeckoProvider>
               <LoaderProvider>
                 <AnchorContextProvider>
@@ -28,8 +24,6 @@ export const Providers: FC = ({ children }) => {
                 </AnchorContextProvider>
               </LoaderProvider>
             </CoingeckoProvider>
-          </SPLTokenListProvider>
-        </AccountsProvider>
       </WalletProvider>
     </ConnectionProvider>
   );

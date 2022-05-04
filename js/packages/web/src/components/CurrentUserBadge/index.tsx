@@ -12,14 +12,13 @@ import {
   MetaplexModal,
   Settings,
   shortenAddress,
+  useConnection,
   useConnectionConfig,
-  useNativeAccount,
   useWalletModal,
   useQuerySearch,
   WRAPPED_SOL_MINT,
 } from '@oyster/common';
 import { useSolPrice } from '../../contexts';
-import { useTokenList } from '../../contexts/tokenList';
 import { useDevModeContext } from '../../contexts/devModeContext';
 import { TokenCircle } from '../Custom';
 
@@ -134,6 +133,45 @@ const AddFundsModal = (props: {
   );
 };
 
+export const useAccount = (publicKey: PublicKey | null) => {
+  const connection = useConnection();
+
+  const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
+
+  React.useEffect(() => {
+    let subId = 0;
+    const updateAccount = (account: AccountInfo<Buffer> | null) => {
+      if (account) {
+        setNativeAccount(account);
+      }
+    };
+
+    (async () => {
+      if (!connection || !publicKey) {
+        return;
+      }
+
+      const account = await connection.getAccountInfo(publicKey);
+      updateAccount(account);
+
+      subId = connection.onAccountChange(publicKey, updateAccount);
+    })();
+
+    return () => {
+      if (subId) {
+        connection.removeAccountChangeListener(subId);
+      }
+    };
+  }, [setNativeAccount, publicKey, connection]);
+
+  return { account: nativeAccount, publicKey };
+};
+
+export const useNativeAccount = () => {
+  const { publicKey } = useWallet();
+  return useAccount(publicKey);
+}
+
 export const CurrentUserBadge = (props: {
   showBalance?: boolean;
   showAddress?: boolean;
@@ -143,7 +181,6 @@ export const CurrentUserBadge = (props: {
   const { account } = useNativeAccount();
   const solPrice = useSolPrice();
   const [showAddFundsModal, setShowAddFundsModal] = useState<Boolean>(false);
-  const solMintInfo = useTokenList().tokenMap.get(WRAPPED_SOL_MINT.toString());
 
   if (!wallet || !publicKey) {
     return null;
@@ -200,10 +237,6 @@ export const CurrentUserBadge = (props: {
                     marginBottom: 10,
                   }}
                 >
-                  <TokenCircle
-                    iconFile={solMintInfo ? solMintInfo.logoURI : ''}
-                  />
-                  &nbsp;
                   <span
                     style={{
                       fontWeight: 600,
