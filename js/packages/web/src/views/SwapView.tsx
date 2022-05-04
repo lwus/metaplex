@@ -8,21 +8,31 @@ import {
   Stack,
 } from "@mui/material";
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import { useConnection, notify, shortenAddress } from '@oyster/common';
+import { useConnection, notify, shortenAddress, decodeMetadata } from '@oyster/common';
 import * as anchor from '@project-serum/anchor';
-import { PublicKey } from '@solana/web3.js';
+import {
+  PublicKey,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+} from '@solana/web3.js';
 import { useWallet } from "@solana/wallet-adapter-react";
 
 import {
   CachedImageContent,
 } from '../components/ArtContent';
+import { useLoading } from '../components/Loader';
 import {
   envFor,
 } from '../utils/transactions';
 import {
   TOKEN_ENTANGLEMENT_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  WRAPPED_SOL_MINT,
 } from '../utils/ids';
-
+import {
+  getAssociatedTokenAccount,
+  getMetadata,
+} from '../utils/accounts';
 
 
 const entanglements = [
@@ -205,10 +215,54 @@ export const MonospacedPublicKey = ({ address }: { address: PublicKey }) => {
   );
 }
 
+export const TOKEN_ENTANGLER = 'token_entangler';
+export const getTokenEntanglement = async (
+  mintA: PublicKey,
+  mintB: PublicKey,
+): Promise<[PublicKey, number]> => {
+  return await PublicKey.findProgramAddress(
+    [Buffer.from(TOKEN_ENTANGLER), mintA.toBuffer(), mintB.toBuffer()],
+    TOKEN_ENTANGLEMENT_PROGRAM_ID,
+  );
+};
+
+export const ESCROW = 'escrow';
+export const A = 'A';
+export const B = 'B';
+export const getTokenEntanglementEscrows = async (
+  mintA: PublicKey,
+  mintB: PublicKey,
+): Promise<[PublicKey, number, PublicKey, number]> => {
+  return [
+    ...(await PublicKey.findProgramAddress(
+      [
+        Buffer.from(TOKEN_ENTANGLER),
+        mintA.toBuffer(),
+        mintB.toBuffer(),
+        Buffer.from(ESCROW),
+        Buffer.from(A),
+      ],
+      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    )),
+    ...(await PublicKey.findProgramAddress(
+      [
+        Buffer.from(TOKEN_ENTANGLER),
+        mintA.toBuffer(),
+        mintB.toBuffer(),
+        Buffer.from(ESCROW),
+        Buffer.from(B),
+      ],
+      TOKEN_ENTANGLEMENT_PROGRAM_ID,
+    )),
+  ];
+};
+
 export const SwapView = () => {
   const wallet = useWallet();
   const connection = useConnection();
   const [program, setProgram] = React.useState<anchor.Program | null>(null);
+
+  const { setLoading } = useLoading();
 
   React.useEffect(() => {
     const wrap = async () => {
@@ -228,6 +282,129 @@ export const SwapView = () => {
     };
     wrap();
   }, []);
+
+  const SwapButton = (props) => {
+    return (
+      <IconButton
+        style={{
+          color: 'white',
+        }}
+        onClick={() => {
+          setLoading(true);
+          const wrap = async () => {
+            console.log(props);
+            const [epKey] = await getTokenEntanglement(props.mintA, props.mintB);
+            const epObj = await program.account.entangledPair.fetch(epKey);
+            if (!epObj.mintA.equals(props.mintA)
+                || !epObj.mintB.equals(props.mintB)
+                || !epObj.treasuryMint.equals(WRAPPED_SOL_MINT)) {
+              throw new Error(`Entanglement ${shortenAddress(epKey.toBase58())} seems misconfigured!`);
+            }
+
+            const walletKey = wallet.publicKey;
+            const aATA = await getAssociatedTokenAccount(walletKey, epObj.mintA);
+            const bATA = await getAssociatedTokenAccount(walletKey, epObj.mintB);
+            const aATAInfo = await connection.getAccountInfo(aATA);
+            const aTokens = new BN(aATAInfo ? AccountLayout.decode(aATAInfo.data).amount : 0);
+
+            let token, replacementToken, tokenMint, replacementTokenMint;
+            if (aTokens.equals(new BN(0))) {
+              token = bATA;
+              tokenMint = epObj.mintB;
+              replacementToken = aATA;
+              replacementTokenMint = epObj.mintA;
+            } else {
+              token = aATA;
+              tokenMint = epObj.mintA;
+              replacementToken = bATA;
+              replacementTokenMint = epObj.mintB;
+            }
+
+            const [tokenAEscrow, _, tokenBEscrow] = await getTokenEntanglementEscrows(
+                epObj.mintA, epObj.mintB);
+
+            const tokenMetadata = await getMetadata(tokenMint);
+            const metadataObj = await connection.getAccountInfo(tokenMetadata);
+            const metadataDecoded: Metadata = decodeMetadata(metadataObj.data);
+
+            const remainingAccounts = [];
+            for (const creator of metadataDecoded.data.creators) {
+              remainingAccounts.push({
+                pubkey: new PublicKey(creator.address),
+                isWritable: true,
+                isSigner: false,
+              });
+            }
+
+            const instruction = await anchorProgram.instruction.swap({
+              accounts: {
+                treasuryMint: epObj.treasuryMint,
+                payer: walletKey,
+                paymentAccount: walletKey,
+                paymentTransferAuthority: walletKey,
+                transferAuthority: transferAuthority.publicKey,
+                token,
+                tokenMetadata,
+                replacementToken,
+                replacementTokenMint,
+                tokenAEscrow,
+                tokenBEscrow,
+                entangledPair: epKey,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                systemProgram: SystemProgram.programId,
+                ataProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                rent: SYSVAR_RENT_PUBKEY,
+              },
+              remainingAccounts,
+            });
+
+            const recentBlockhash = (
+              await connection.getLatestBlockhash('confirmed')
+            ).blockhash;
+            console.log('blockhash', recentBlockhash);
+            const tx = new Transaction({
+              feePayer: wallet.publicKey,
+              recentBlockhash,
+            });
+            tx.add(instruction);
+            tx.setSigners(walletKey);
+
+            await wallet.signTransaction(tx);
+
+            const { txid } = await sendSignedTransaction({
+              signedTransaction: tx,
+              connection,
+            });
+            notify({
+              message: 'Swapped succesfully',
+              description: (
+                <a
+                  href={explorerLinkFor(txid, connection)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View transaction on explorer
+                </a>
+              ),
+            });
+          };
+
+          wrap()
+            .then(() => setLoading(false))
+            .catch(reason => {
+              console.error(reason);
+              notify({
+                message: 'Unknown error',
+                description: reason.message ? `${reason.message}` : JSON.stringify(reason),
+              })
+              setLoading(false)
+            });
+        }}
+      >
+        <SwapHorizIcon />
+      </IconButton>
+    );
+  };
 
   // TODO: more robust
   const maxWidth = 960;
@@ -290,13 +467,7 @@ export const SwapView = () => {
                         }}
                       >
                         <MonospacedPublicKey address={p.mintA} />
-                        <IconButton
-                          style={{
-                            color: 'white',
-                          }}
-                        >
-                          <SwapHorizIcon />
-                        </IconButton>
+                        <SwapButton {...p} />
                         <MonospacedPublicKey address={p.mintB} />
                       </div>
                       </div>
