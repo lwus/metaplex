@@ -344,8 +344,8 @@ export const SwapView = () => {
             const [tokenAEscrow, _, tokenBEscrow] = await getTokenEntanglementEscrows(
                 epObj.mintA, epObj.mintB);
 
-            const tokenMetadata = await getMetadata(tokenMint);
-            const metadataObj = await connection.getAccountInfo(tokenMetadata);
+            const replacementTokenMetadata = await getMetadata(replacementTokenMint);
+            const metadataObj = await connection.getAccountInfo(replacementTokenMetadata);
             if (!metadataObj) {
               // really shouldn't be possible since entanglement wouldn't exist eighet
               throw new Error(`Could not fetch metadata for token ${tokenMint.toBase58()}`);
@@ -369,9 +369,10 @@ export const SwapView = () => {
                 paymentTransferAuthority: walletKey,
                 transferAuthority: walletKey,
                 token,
-                tokenMetadata,
+                tokenMint,
                 replacementToken,
                 replacementTokenMint,
+                replacementTokenMetadata,
                 tokenAEscrow,
                 tokenBEscrow,
                 entangledPair: epKey,
@@ -407,6 +408,7 @@ export const SwapView = () => {
                   href={explorerLinkFor(txid, connection)}
                   target="_blank"
                   rel="noreferrer"
+                  style={{ color: 'black' }}
                 >
                   View transaction on explorer
                 </a>
