@@ -17,6 +17,7 @@ import {
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   WRAPPED_SOL_MINT,
   Metadata,
+  getMultipleAccounts,
 } from '@oyster/common';
 import * as anchor from '@project-serum/anchor';
 import {
@@ -320,6 +321,28 @@ export const SwapView = () => {
     };
     wrap();
   }, [wallet?.publicKey]);
+
+  React.useEffect(() => {
+    const wrap = async () => {
+      const entanglementKeys = (await Promise.all(entanglements.map(e => e.pairs).flat().map(
+        p => getTokenEntanglement(p.mintA, p.mintB)))).map(v => v[0]);
+
+      const entanglementInfos = await getMultipleAccounts(
+        connection, entanglementKeys.map(k => k.toBase58()));
+
+      for (const [index, info] of entanglementInfos.array.entries()) {
+        if (info === null) {
+          notify({
+            message: 'Fetch error',
+            description: `Could not find token entanglement ${entanglementKeys[index]}`,
+          });
+        } else {
+          console.log(`Found entanglement ${entanglementKeys[index]}`);
+        }
+      }
+    };
+    wrap();
+  }, []);
 
   const SwapButton = (props) => {
     return (
