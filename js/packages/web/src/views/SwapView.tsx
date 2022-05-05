@@ -483,6 +483,7 @@ export const SwapView = () => {
     const findPair = p => relevantMints.findIndex(m => m.equals(p.mintA) || m.equals(p.mintB));
     const matching = props.pairs.filter(p => findPair(p) !== -1);
     const nonMatching = props.pairs.filter(p => findPair(p) === -1);
+    const numPairs = props.pairs.length;
 
     const EntangledPair = (props) => {
       return (
@@ -497,6 +498,7 @@ export const SwapView = () => {
             fontSize: props.disabled ? 'inherit': '16px',
           }}
         >
+          <span style={{ color: '#bbb' }}>{props.edition}/{numPairs}</span>&nbsp;&nbsp;
           <MonospacedPublicKey address={props.mintA} />
           <SwapButton {...props} />
           <MonospacedPublicKey address={props.mintB} />
