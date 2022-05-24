@@ -153,6 +153,7 @@ export function Routes() {
   const mightyKnightyDuckYields = [
     {
       image: "https://www.arweave.net/UMsb5j6OWgM-JUEeQqYej82kHFDw7GPGA2pzSUkRFdE?ext=gif",
+      glb: "https://arweave.net/0SCrB_5BsAZ1f54XD60-SaVn7sqzi6svI96ABWjzIEc",
       name: "mighty knighty duck",
       mint: new PublicKey("2oXhnNh3pAPLBkQJyVceuZHNWkwpM5azKjGfqeBbAF3R"),
     },
@@ -161,8 +162,18 @@ export function Routes() {
   const apeCyborgYields = [
     {
       image: "https://arweave.net/w2I8pcZ4bRWpDOxxZOFS2CEzgm9GOf9nhVW0ZFNluJU",
+      glb: "https://arweave.net/y3i4FA-tzsOxZEV49XMtlfsN3a9Et5PgABczTQHS23w",
       name: "professor ape cyborg",
       mint: new PublicKey("J8nLE658PUcLGU6qecatWweutttC9yofxF4UTeYutUXj"),
+    },
+  ];
+
+  const deppelinYields = [
+    {
+      image: "https://arweave.net/TC6GCCkNepHVlNCekaSBbX-a4FVwV3PVBIXixdod34E",
+      glb: "https://arweave.net/xEqu41i9cgPudbzfkOu4MmbREZf4cHpu-BKhNBQsd3c",
+      name: "deppelin",
+      mint: new PublicKey("BNJwHxo5yP9W77aVrmAehepr1QLRXkBPyEzZqUUisg8o"),
     },
   ];
 
@@ -216,6 +227,17 @@ export function Routes() {
                 />
               )
             } />
+            <Route path="/deppelin" component={
+              () => (
+                <FireballView
+                  recipeKey={new PublicKey("GUKyCfChES46JJxFv75hKCdhR3qorTkTa5cppU27v9Cp")}
+                  recipeYields={deppelinYields}
+                  ingredients={{
+                    ...ingredientSubset(['sailboat', 'hot air balloon']),
+                  }}
+                />
+              )
+            } />
             <Route path="/swap" component={SwapView} />
             <Route path="/" component={
               () => (
@@ -224,16 +246,11 @@ export function Routes() {
                     ...cityYields.map(c => ({ ...c, link: pathForYield(c) })),
                     ...mightyKnightyDuckYields.map(c => ({ ...c, link: "/mightyknightyduck" })),
                     ...apeCyborgYields.map(c => ({ ...c, link: "/professorapecyborg" })),
+                    ...deppelinYields.map(c => ({ ...c, link: "/deppelin" })),
                     ...[
                       {
                         image: "https://pbs.twimg.com/media/FF9EUF0WYAoXcyf?format=jpg&name=large",
                         name: "princess gwendolin",
-                      }
-                    ],
-                    ...[
-                      {
-                        image: "https://pbs.twimg.com/media/FF9EUHDWQAcWhj0?format=jpg&name=large",
-                        name: "duck zeppelin",
                       }
                     ],
                   ]}
