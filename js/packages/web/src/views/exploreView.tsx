@@ -117,7 +117,6 @@ export const ExploreView = (
   const columnWidth = (maxWidth - columnsGap * (maxColumns - 1)) / maxColumns;
 
   const tilePadding = 0;
-  const imageWidth = columnWidth - tilePadding * 2;
 
   const { width } = useWindowDimensions();
   const sizedColumns = (width : number) => {
@@ -130,6 +129,15 @@ export const ExploreView = (
     }
   };
   const cols = sizedColumns(width);
+  const imageWidth = (function () {
+    if (width > 576) {
+      let layoutWidth = Math.min(width - outerPadding, maxWidth);
+      return (layoutWidth - (cols - 1) * columnsGap) / cols;
+    } else {
+      // 1 column
+      return width - 12 * 2;
+    }
+  })();
   return (
     <Stack
       spacing={1}
