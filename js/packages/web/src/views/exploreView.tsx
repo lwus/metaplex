@@ -166,16 +166,31 @@ export const ExploreView = (
       <Box style={{ height: '20px' }} />
       <ImageList cols={cols} gap={columnsGap}>
         {props.recipeYields.map((r, idx) => {
-          const yieldImage = (style) => (
-            <CachedImageContent
+          const yieldImage = (style) => {
+            if (checked3d && r.glb) {
+              return (<model-viewer
+                alt={r.name}
+                src={r.glb}
+                ar
+                ar-modes="webxr scene-viewer quick-look"
+                className={"fullAspectRatio"}
+                camera-controls
+                enable-pan
+                style={{
+                  width: imageWidth,
+                  height: imageWidth,
+                }}
+              />);
+            }
+            return (<CachedImageContent
               uri={r.image}
               preview={!!r.link}
               className={"fullAspectRatio"}
               style={{
                 ...style,
               }}
-            />
-          );
+            />);
+          };
           const remaining = r.mint ? editionsRemaining[r.mint.toBase58()] : null;
           return (
             <div
