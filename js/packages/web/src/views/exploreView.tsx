@@ -73,7 +73,8 @@ export const ExploreView = (
 
   const { loading, setLoading } = useLoading();
 
-  const [checked3d, setChecked3d] = React.useState(true);
+  const [checked3d, setChecked3d] = React.useState(false);
+  const [recipeChecked3d, setRecipechecked3d] = React.useState(false);
   const [editionsRemaining, setEditionsRemaining] = React.useState([]);
 
   React.useEffect(() => {
@@ -169,13 +170,17 @@ export const ExploreView = (
         Explore Recipes
       </p>
       <p className={"text-subtitle"}>
-        Recipes let you mix and match your current NFTs to craft new, rarer items.
+        Recipes let you mix and match your current NFTs to craft new, rarer items. View in 3D!
+        <PurpleSwitch
+          checked={recipeChecked3d}
+          onChange={e => setRecipechecked3d(e.target.checked)}
+        />
       </p>
       <Box style={{ height: '20px' }} />
       <ImageList cols={cols} gap={columnsGap}>
         {props.recipeYields.map((r, idx) => {
           const yieldImage = (style) => {
-            if (checked3d && r.glb) {
+            if (recipeChecked3d && r.glb) {
               return (<model-viewer
                 alt={r.name}
                 src={r.glb}
