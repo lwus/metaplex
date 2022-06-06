@@ -139,6 +139,26 @@ export const ExploreView = (
       return width - 12 * 2;
     }
   })();
+
+  const GalleryTour = () => {
+    return <>
+      <video
+        autoPlay loop muted
+        style={{
+          height: "600px",
+          marginLeft: -outerPadding / 2,
+          width: (width >= maxWidth + outerPadding ? maxWidth + outerPadding : width),
+          overflowX: "hidden",
+          objectFit: "cover",
+        }}
+      >
+        <source src="/cyber_gallery.mp4" type="video/mp4" />
+      </video>
+      <Box />
+      <Box />
+    </>
+  };
+
   return (
     <Stack
       spacing={1}
@@ -148,26 +168,8 @@ export const ExploreView = (
         marginRight: 'auto',
       }}
     >
-      {width >= 768 && (
-        <>
-        <video
-          autoPlay loop muted
-          style={{
-            height: "600px",
-            marginLeft: -outerPadding / 2,
-            width: (width >= maxWidth + outerPadding ? maxWidth + outerPadding : width),
-            overflowX: "hidden",
-            objectFit: "cover",
-          }}
-        >
-          <source src="/cyber_gallery.mp4" type="video/mp4" />
-        </video>
-        <Box />
-        <Box />
-        </>
-      )}
       <p className={"text-title"}>
-        Explore Recipes
+        The Recipes
       </p>
       <p className={"text-subtitle"}>
         Recipes let you mix and match your current NFTs to craft new, rarer items. View in 3D!
@@ -342,6 +344,23 @@ export const ExploreView = (
           );
         })}
       </ImageList>
+
+      {width >= 768 && <>
+        <Box style={{ height: '20px' }} />
+        <p className={"text-title"}>
+          The Metaverse
+        </p>
+        <p className={"text-subtitle"}>
+          <a
+            href="https://www.cyber.xyz/thecollectoooooor"
+            target="_blank"
+          >
+            From pplpleasr and cyber.xyz
+          </a>
+        </p>
+        <Box style={{ height: '10px' }} />
+        <GalleryTour />
+      </>}
     </Stack>
   );
 }
