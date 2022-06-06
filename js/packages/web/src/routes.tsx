@@ -243,10 +243,10 @@ export function Routes() {
               () => (
                 <ExploreView
                   recipeYields={[
-                    ...cityYields.map(c => ({ ...c, link: pathForYield(c) })),
-                    ...mightyKnightyDuckYields.map(c => ({ ...c, link: "/mightyknightyduck" })),
-                    ...apeCyborgYields.map(c => ({ ...c, link: "/professorapecyborg" })),
                     ...deppelinYields.map(c => ({ ...c, link: "/deppelin" })),
+                    ...apeCyborgYields.map(c => ({ ...c, link: "/professorapecyborg" })),
+                    ...mightyKnightyDuckYields.map(c => ({ ...c, link: "/mightyknightyduck" })),
+                    ...cityYields.map(c => ({ ...c, link: pathForYield(c) })),
                     ...[
                       {
                         image: "https://pbs.twimg.com/media/FF9EUF0WYAoXcyf?format=jpg&name=large",
