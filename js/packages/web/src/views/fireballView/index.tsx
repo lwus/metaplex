@@ -455,7 +455,7 @@ const fetchRelevantMints = async (
   let recipe;
   try {
     recipe = await program.account.recipe.fetch(recipeKey);
-  } catch (err) {
+  } catch (err: any) {
     const recipeKeyStr = recipeKey.toBase58();
     throw new Error(`Failed to find recipe ${recipeKeyStr}`);
   }
@@ -532,7 +532,7 @@ export const FireballView = (
         const recipeYieldsPromise = getRecipeYields(connection, recipes.map(r => r.mint));
 
         setRecipeYields(await recipeYieldsPromise);
-      } catch (err) {
+      } catch (err: any) {
         console.log('Fetch recipe yields err', err);
       }
       setLoading(false);
@@ -577,13 +577,13 @@ export const FireballView = (
           setIngredients(onChainIngredients)
           setRelevantMints(relevantMints);
           setMatchingIndices({});
-        } catch (err) {
+        } catch (err: any) {
           console.log('Fetch relevant mints err', err);
         }
         setLoading(false);
       };
       wrap();
-    } catch (err) {
+    } catch (err: any) {
       console.log('Key decode err', err);
       setLoading(false);
     }
@@ -1124,7 +1124,7 @@ export const FireballView = (
             throw new Error(`Unknown operation ${operation}`);
           }
           setLoading(false);
-        } catch (err) {
+        } catch (err: any) {
           notify({
             message: `${inBatch ? 'Cancel of ' : ''} ${capitalize(operation)} ingredient failed`,
             description: `${err}`,
@@ -1202,7 +1202,7 @@ export const FireballView = (
           setChangeList(Object.values(newIngredients));
           await mintRecipe(e, recipe.mint, Object.values(newIngredients));
           setLoading(false);
-        } catch (err) {
+        } catch (err: any) {
           notify({
             message: `Mint failed`,
             description: err.message,
@@ -1409,7 +1409,7 @@ export const FireballView = (
               try {
                 await submitDishChanges(e);
                 setLoading(false);
-              } catch (err) {
+              } catch (err: any) {
                 console.log(err);
                 notify({
                   message: `Dish Changes failed`,

@@ -290,7 +290,7 @@ export const SwapView = () => {
           TOKEN_ENTANGLEMENT_PROGRAM_ID,
           new anchor.Provider(connection, null as any, {})
         ));
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
         notify({
           message: `Failed to fetch anchor IDL ${TOKEN_ENTANGLEMENT_PROGRAM_ID.toBase58()}`,
@@ -328,7 +328,7 @@ export const SwapView = () => {
         p => getTokenEntanglement(p.mintA, p.mintB)))).map(v => v[0]);
 
       const entanglementInfos = await getMultipleAccounts(
-        connection, entanglementKeys.map(k => k.toBase58()));
+        connection, entanglementKeys.map(k => k.toBase58()), 'processed');
 
       for (const [index, info] of entanglementInfos.array.entries()) {
         if (info === null) {

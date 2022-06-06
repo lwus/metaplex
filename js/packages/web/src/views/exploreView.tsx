@@ -45,6 +45,7 @@ export type RecipeLink = {
   name: string,
   mint?: PublicKey,
   link?: string,
+  glb?: string,
 };
 
 const PurpleSwitch = styled(Switch)(({ theme }) => ({
@@ -183,6 +184,7 @@ export const ExploreView = (
         {props.recipeYields.map((r, idx) => {
           const yieldImage = (style) => {
             if (recipeChecked3d && r.glb) {
+              // @ts-ignore
               return (<model-viewer
                 alt={r.name}
                 src={r.glb}
