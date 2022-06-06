@@ -230,7 +230,7 @@ export function Routes() {
             <Route path="/deppelin" component={
               () => (
                 <FireballView
-                  recipeKey={new PublicKey("GUKyCfChES46JJxFv75hKCdhR3qorTkTa5cppU27v9Cp")}
+                  recipeKey={new PublicKey("5yLsFHmrUqh1MuC1FMx3jpFudfWJ4vVkiHr7tEgNekjM")}
                   recipeYields={deppelinYields}
                   ingredients={{
                     ...ingredientSubset(['sailboat', 'hot air balloon']),
