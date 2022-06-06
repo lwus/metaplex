@@ -171,7 +171,7 @@ export function Routes() {
   const deppelinYields = [
     {
       image: "https://arweave.net/TC6GCCkNepHVlNCekaSBbX-a4FVwV3PVBIXixdod34E",
-      glb: "https://arweave.net/xEqu41i9cgPudbzfkOu4MmbREZf4cHpu-BKhNBQsd3c",
+      glb: "https://arweave.net/oL8-wWOC0DLpQUCFXwmA9Kpmu1fAueKHk6KAdn3w6Qk",
       name: "deppelin",
       mint: new PublicKey("BNJwHxo5yP9W77aVrmAehepr1QLRXkBPyEzZqUUisg8o"),
     },
