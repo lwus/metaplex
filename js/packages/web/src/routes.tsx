@@ -123,6 +123,12 @@ export function Routes() {
     return v.reduce((acc, i) => ({ ...acc, [i.name]: i.image }), {});
   };
 
+  const ingredientMatching = (name: string) => {
+    const res = ingredients.find(i => i.name === name);
+    if (!res) throw new Error(`ingredient ${name} not found`);
+    return res;
+  };
+
   const ingredientSubset = (subset : Array<string>) => {
     return reduceIngredients(ingredients
       .filter(i => { return subset.includes(i.name); }));
@@ -174,6 +180,15 @@ export function Routes() {
       glb: "https://arweave.net/oL8-wWOC0DLpQUCFXwmA9Kpmu1fAueKHk6KAdn3w6Qk",
       name: "deppelin",
       mint: new PublicKey("BNJwHxo5yP9W77aVrmAehepr1QLRXkBPyEzZqUUisg8o"),
+    },
+  ];
+
+  const gwendolinYields = [
+    {
+      image: "https://arweave.net/ksXwJ1HAj1PD7qwFwEGRS84u3VxaqzsXDLTKgPcL6O8",
+      glb: "https://arweave.net/fkKWBlxJHW_lF2mt6Iu5KhRydAC5Hx6ZwJ-OZa2VgZw",
+      name: "gwendolin",
+      mint: new PublicKey("WfN7PjJxiTfsXyo5vycwhr2bYPHwGBFqh6jp8tvtt7o"),
     },
   ];
 
@@ -238,21 +253,31 @@ export function Routes() {
                 />
               )
             } />
+            <Route path="/gwendolin" component={
+              () => (
+                <FireballView
+                  // TODO
+                  recipeKey={new PublicKey("5yLsFHmrUqh1MuC1FMx3jpFudfWJ4vVkiHr7tEgNekjM")}
+                  recipeYields={gwendolinYields}
+                  ingredients={{
+                    'gwenda 1': ingredientMatching('umbrella duck').image,
+                    'gwenda 2': ingredientMatching('umbrella duck').image,
+                    'gwenda 3': ingredientMatching('umbrella duck').image,
+                    'gwenda 4': ingredientMatching('umbrella duck').image,
+                  }}
+                />
+              )
+            } />
             <Route path="/swap" component={SwapView} />
             <Route path="/" component={
               () => (
                 <ExploreView
                   recipeYields={[
+                    ...gwendolinYields.map(c => ({ ...c, link: "/gwendolin" })),
                     ...deppelinYields.map(c => ({ ...c, link: "/deppelin" })),
                     ...apeCyborgYields.map(c => ({ ...c, link: "/professorapecyborg" })),
                     ...mightyKnightyDuckYields.map(c => ({ ...c, link: "/mightyknightyduck" })),
                     ...cityYields.map(c => ({ ...c, link: pathForYield(c) })),
-                    ...[
-                      {
-                        image: "https://pbs.twimg.com/media/FF9EUF0WYAoXcyf?format=jpg&name=large",
-                        name: "princess gwendolin",
-                      }
-                    ],
                   ]}
                   ingredients={ingredients}
                 />
