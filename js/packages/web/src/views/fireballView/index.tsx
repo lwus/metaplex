@@ -539,7 +539,29 @@ export const FireballView = (
   const [changeList, setChangeList] = React.useState<Array<any>>([]);
 
   // ingredient => mint
-  const [selectedMints, setMatchingIndices] = React.useState<{ [key: string]: PublicKey }>({});
+  type SelectedMint = { [key: string]: PublicKey };
+  const [explicitMints, setExplicitMints] = React.useState<SelectedMint>({});
+  const implicitMints = React.useMemo(() => {
+    return Object.keys(ingredients).reduce((prevSelected: SelectedMint, ingredient: string): SelectedMint => {
+      const selectedMint = explicitMints[ingredient];
+      if (selectedMint) return { ...prevSelected };
+
+      const matchingIngredients = relevantMints.filter(
+        c => {
+          // not explicitly selected
+          return !Object.values(explicitMints).find(m => m.equals(c.mint))
+            // or implicitly assigned to another group
+            && !Object.values(prevSelected).find(m => m?.equals(c.mint))
+            // and matches the ingredient
+            && c.ingredients.find(i => i === ingredient);
+        });
+      if (matchingIngredients[0]) {
+        return { ...prevSelected, [ingredient]: matchingIngredients[0].mint };
+      } else {
+        return { ...prevSelected };
+      }
+    }, {});
+  }, [explicitMints, relevantMints]);
 
   const numIngredients = Object.keys(ingredients).length;
   const reduceIngredient = (acc: number, relevant: RelevantMint) => {
@@ -570,7 +592,7 @@ export const FireballView = (
     if (!anchorWallet) {
       setIngredients([])
       setRelevantMints([]);
-      setMatchingIndices({});
+      setExplicitMints({});
       return;
     }
     if (!connection || !program) return;
@@ -602,7 +624,7 @@ export const FireballView = (
           setIngredientList(ingredientList);
           setIngredients(onChainIngredients)
           setRelevantMints(relevantMints);
-          setMatchingIndices({});
+          setExplicitMints({});
         } catch (err: any) {
           console.log('Fetch relevant mints err', err);
         }
@@ -960,7 +982,7 @@ export const FireballView = (
     setIngredients(ingredients);
     setRelevantMints(relevantMints);
     setChangeList([]);
-    setMatchingIndices({});
+    setExplicitMints({});
   };
 
   const mintRecipe = async (
@@ -1111,7 +1133,7 @@ export const FireballView = (
     setIngredients(ingredients);
     setRelevantMints(relevantMints);
     setChangeList([]);
-    setMatchingIndices({});
+    setExplicitMints({});
   };
 
 
@@ -1200,30 +1222,23 @@ export const FireballView = (
       setLoading(true);
       const wrap = async () => {
         try {
-          const dedupMints = [...relevantMints];
           const newIngredients = Object.keys(ingredients).reduce(
             (acc, ingredient) => {
               if (dishIngredients.find(c => c.ingredients.find(i => i === ingredient))) {
                 return acc;
               }
 
-              const selectedMint = selectedMints[ingredient];
+              const selectedMint = explicitMints[ingredient] || implicitMints[ingredient];
               let m: RelevantMint;
               if (selectedMint) {
-                const selected = dedupMints.find(s => s.mint.equals(selectedMint));
+                const selected = relevantMints.find(s => s.mint.equals(selectedMint));
                 if (!selected) {
                   throw new Error(`You don't have ingredient ${ingredient}`);
                 }
                 m = selected;
               } else {
-                const matchingIngredients = dedupMints.filter(
-                    c => c.ingredients.find(i => i === ingredient));
-                if (matchingIngredients.length === 0) {
-                  throw new Error(`You don't have ingredient ${ingredient}`);
-                }
-                m = matchingIngredients[0];
+                throw new Error(`You don't have ingredient ${ingredient}`);
               }
-              dedupMints.splice(dedupMints.findIndex(s => s.mint.equals(m.mint)), 1);
               return {
                 ...acc,
                 [ingredient]: {
@@ -1469,26 +1484,22 @@ export const FireballView = (
           paddingTop: '20px',
         }}
       >
-        {Object.keys(ingredients).reduce((acc: Array<DedupIngredientMint>, ingredient, idx): Array<DedupIngredientMint> => {
+        {Object.keys(ingredients).map((ingredient, idx) => {
           const dishIngredient = dishIngredients.find(c => c.ingredients.find(i => i === ingredient));
+          const selectedMint = explicitMints[ingredient] || implicitMints[ingredient];
 
-          const prevSelected = acc.map(v => v.selected);
-
-          const selectedMint = selectedMints[ingredient];
-          const matchingIngredients = relevantMints.filter(
+          const otherMints = relevantMints.filter(
             c => {
               // not explicitly selected
-              return !Object.values(selectedMints).find(m => m.equals(c.mint))
+              return !Object.values(explicitMints).find(m => m.equals(c.mint))
                 // or implicitly assigned to another group
-                && !prevSelected.find(m => m?.equals(c.mint))
+                && !Object.values(implicitMints).find(m => m?.equals(c.mint))
                 // and matches the ingredient
                 && c.ingredients.find(i => i === ingredient);
             });
 
-          console.log(ingredient, idx, selectedMint, selectedMints, matchingIngredients, relevantMints);
-
           let imgStyle: React.CSSProperties;
-          if (dishIngredient || selectedMint || matchingIngredients.length > 0) {
+          if (dishIngredient || selectedMint) {
             imgStyle = {}
           } else {
             imgStyle = { filter: "grayscale(100%)", };
@@ -1503,13 +1514,13 @@ export const FireballView = (
             displayMint = relevantMints.find(c => c.mint.equals(selectedMint)) || null;
             operation = IngredientView.add;
           } else {
-            displayMint = matchingIngredients[0];
+            displayMint = null;
             operation = IngredientView.add;
           }
 
           const inBatch = changeList.find(
               c => displayMint && c.mint.equals(displayMint.mint) && c.ingredient === ingredient && c.operation === operation);
-          return [...acc, { asset: (
+          return (
             <div
               key={idx}
               style={{
@@ -1532,7 +1543,7 @@ export const FireballView = (
                       style={{
                         maxWidth: columnWidth
                             - tilePadding * 2
-                            - 40 * (matchingIngredients.length > 1 ? 3 : 1),
+                            - 40 * (otherMints.length > 1 ? 3 : 1),
                         overflow: 'wrap',
                       }}
                     >
@@ -1565,17 +1576,17 @@ export const FireballView = (
                   }
                   actionIcon={
                     <div style={{ paddingTop: "6px", paddingBottom: "12px" }}>
-                      {!dishIngredient && matchingIngredients.length > 1 && (
+                      {!dishIngredient && otherMints.length > 1 && (
                         <React.Fragment>
                           <IconButton
                             style={{
-                              color: matchingIngredients.length === 0 ? "gray" : "white",
+                              color: otherMints.length === 0 ? "gray" : "white",
                             }}
-                            disabled={matchingIngredients.length === 0}
+                            disabled={otherMints.length === 0}
                             onClick={() => {
-                              setMatchingIndices({
-                                ...selectedMints,
-                                [ingredient]: matchingIngredients[0].mint,
+                              setExplicitMints({
+                                ...explicitMints,
+                                [ingredient]: otherMints[0].mint,
                               });
                             }}
                           >
@@ -1583,13 +1594,13 @@ export const FireballView = (
                           </IconButton>
                           <IconButton
                             style={{
-                              color: matchingIngredients.length === 0 ? "gray" : "white",
+                              color: otherMints.length === 0 ? "gray" : "white",
                             }}
-                            disabled={matchingIngredients.length === 0}
+                            disabled={otherMints.length === 0}
                             onClick={() => {
-                              setMatchingIndices({
-                                ...selectedMints,
-                                [ingredient]: matchingIngredients[0].mint,
+                              setExplicitMints({
+                                ...explicitMints,
+                                [ingredient]: otherMints[0].mint,
                               });
                             }}
                           >
@@ -1613,8 +1624,8 @@ export const FireballView = (
                 />
               </ImageListItem>
             </div>
-          ), selected: displayMint?.mint || null }];
-        }, []).map((v: DedupIngredientMint) => v.asset)}
+          );
+        })}
       </ImageList>
     </Stack>
   );
