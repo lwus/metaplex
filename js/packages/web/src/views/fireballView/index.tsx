@@ -326,12 +326,21 @@ const getRelevantTokenAccounts = async (
   ingredientList : Array<any>,
 ) => {
   const mints = {};
+  let hasLimitedEdition = false;
   for (const group of ingredientList)
-    for (const [idx, mint] of group.mints.entries())
-      mints[mint] = {
+    for (const [idx, mint] of group.mints.entries()) {
+      if (!mints.hasOwnProperty(mint)) {
+        mints[mint] = [];
+      }
+
+      const ingredientLimitedEdition = group.allowLimitedEditions && group.allowLimitedEditions[idx];
+      mints[mint].push({
         ingredient: group.ingredient,
-        allowLimitedEdition: group.allowLimitedEditions && group.allowLimitedEditions[idx],
-      };
+        allowLimitedEdition: ingredientLimitedEdition,
+      });
+
+      hasLimitedEdition |= ingredientLimitedEdition;
+    }
 
   const owned = await connection.getTokenAccountsByOwner(
       walletKey,
@@ -342,15 +351,21 @@ const getRelevantTokenAccounts = async (
 
   let editionParentKeys;
   const mintEditions = {};
-  if (Object.values(mints).every(m => !(m as any).allowLimitedEdition)) {
+  if (!hasLimitedEdition) {
     console.log('No limited editions allowed. Skipping fetches');
     editionParentKeys = new Array(decoded.length);
   } else {
     for (const m of Object.keys(mints)) {
+      const mint = mints[m];
+      if (mint.length > 1) {
+        console.error(`TODO: limited editions in multiple ingredient groups`);
+        return null;
+      }
+
       const edition = (await getEdition(new PublicKey(m))).toBase58();
       mintEditions[edition] = {
-        allowLimitedEdition: mints[m].allowLimitedEdition,
-        ingredient: mints[m].ingredient,
+        allowLimitedEdition: mint[0].allowLimitedEdition,
+        ingredient: mint[0].ingredient,
         key: new PublicKey(m),
       };
     }
@@ -398,10 +413,10 @@ const getRelevantTokenAccounts = async (
     const mint = r.mint.toBase58();
     const editionParentKey = relevant[idx].editionParentKey;
     console.log('TA for ', mint, relevant[idx].tokenAccount.toBase58());
-    if (mint in mints) {
+    if (mints.hasOwnProperty(mint)) {
       return {
         ...r,
-        ingredient: mints[mint].ingredient,
+        ingredient: mints[mint][0].ingredient,
         tokenAccount: relevant[idx].tokenAccount,
       };
     } else {
