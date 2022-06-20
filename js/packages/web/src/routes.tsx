@@ -256,8 +256,7 @@ export function Routes() {
             <Route path="/gwendolin" component={
               () => (
                 <FireballView
-                  // TODO
-                  recipeKey={new PublicKey("5yLsFHmrUqh1MuC1FMx3jpFudfWJ4vVkiHr7tEgNekjM")}
+                  recipeKey={new PublicKey("44h7CvSmWGHfXJTgtEjhxuaxbCXWG9dBUpgXq4Ume7Hs")}
                   recipeYields={gwendolinYields}
                   ingredients={{
                     'gwenda 1': ingredientMatching('umbrella duck').image,
