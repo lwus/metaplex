@@ -1543,7 +1543,7 @@ export const FireballView = (
                       style={{
                         maxWidth: columnWidth
                             - tilePadding * 2
-                            - 40 * (otherMints.length > 1 ? 3 : 1),
+                            - 40 * (otherMints.length > 0 ? 2 : 1),
                         overflow: 'wrap',
                       }}
                     >
@@ -1576,27 +1576,12 @@ export const FireballView = (
                   }
                   actionIcon={
                     <div style={{ paddingTop: "6px", paddingBottom: "12px" }}>
-                      {!dishIngredient && otherMints.length > 1 && (
+                      {!dishIngredient && otherMints.length > 0 && (
                         <React.Fragment>
                           <IconButton
                             style={{
-                              color: otherMints.length === 0 ? "gray" : "white",
+                              color: "white",
                             }}
-                            disabled={otherMints.length === 0}
-                            onClick={() => {
-                              setExplicitMints({
-                                ...explicitMints,
-                                [ingredient]: otherMints[0].mint,
-                              });
-                            }}
-                          >
-                            <ChevronLeftIcon />
-                          </IconButton>
-                          <IconButton
-                            style={{
-                              color: otherMints.length === 0 ? "gray" : "white",
-                            }}
-                            disabled={otherMints.length === 0}
                             onClick={() => {
                               setExplicitMints({
                                 ...explicitMints,
