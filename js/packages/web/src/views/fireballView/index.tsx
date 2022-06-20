@@ -52,6 +52,7 @@ import {
   shortenAddress,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
+  Wallet,
 } from '@oyster/common';
 import BN from 'bn.js';
 import { capitalize } from 'lodash';
@@ -157,7 +158,7 @@ type MintAndImage = {
   description: string,
 };
 
-type RelevantMint = MintAndImage & { ingredient : string };
+type RelevantMint = MintAndImage & { ingredients : Array<string> };
 
 type OnChainIngredient = RelevantMint;
 
@@ -308,15 +309,19 @@ const getOnChainIngredients = async (
     const storeAccount = storeAccounts[idx];
     if (storeAccount !== null) {
       const currentStore = AccountLayout.decode(Buffer.from(storeAccount.data));
-      mints[new PublicKey(currentStore.mint).toBase58()] = group.ingredient;
+      const mint = new PublicKey(currentStore.mint).toBase58();
+      if (!mints.hasOwnProperty(mint)) {
+        mints[mint] = [];
+      }
+      mints[mint].push(group.ingredient);
     }
   }
   console.log(mints);
   const ingredientImages = await fetchMintsAndImages(
       connection, Object.keys(mints).map(r => new PublicKey(r)));
   const ret = ingredientImages.map(
-      r => ({ ...r, ingredient: mints[r.mint.toBase58()] }));
-  ret.sort((lft, rht) => lft.ingredient.localeCompare(rht.ingredient));
+      r => ({ ...r, ingredients: mints[r.mint.toBase58()] }));
+  ret.sort((lft, rht) => lft.ingredients[0].localeCompare(rht.ingredients[0]));
   return ret;
 };
 
@@ -324,7 +329,7 @@ const getRelevantTokenAccounts = async (
   connection : RPCConnection,
   walletKey : PublicKey,
   ingredientList : Array<any>,
-) => {
+): Promise<Array<WalletIngredient>> => {
   const mints = {};
   let hasLimitedEdition = false;
   for (const group of ingredientList)
@@ -339,7 +344,7 @@ const getRelevantTokenAccounts = async (
         allowLimitedEdition: ingredientLimitedEdition,
       });
 
-      hasLimitedEdition |= ingredientLimitedEdition;
+      hasLimitedEdition = hasLimitedEdition || ingredientLimitedEdition;
     }
 
   const owned = await connection.getTokenAccountsByOwner(
@@ -359,7 +364,7 @@ const getRelevantTokenAccounts = async (
       const mint = mints[m];
       if (mint.length > 1) {
         console.error(`TODO: limited editions in multiple ingredient groups`);
-        return null;
+        return [];
       }
 
       const edition = (await getEdition(new PublicKey(m))).toBase58();
@@ -416,7 +421,7 @@ const getRelevantTokenAccounts = async (
     if (mints.hasOwnProperty(mint)) {
       return {
         ...r,
-        ingredient: mints[mint][0].ingredient,
+        ingredients: mints[mint].map(m => m.ingredient),
         tokenAccount: relevant[idx].tokenAccount,
       };
     } else {
@@ -426,7 +431,7 @@ const getRelevantTokenAccounts = async (
       }
       return {
         ...r,
-        ingredient: parent.ingredient,  // lookup by parent edition
+        ingredients: [parent.ingredient],  // lookup by parent edition
         tokenAccount: relevant[idx].tokenAccount,
         parent: {
           edition: await getEdition(new PublicKey(mint)),
@@ -437,7 +442,7 @@ const getRelevantTokenAccounts = async (
     }
   }));
   console.log(ret);
-  ret.sort((lft, rht) => lft.ingredient.localeCompare(rht.ingredient));
+  ret.sort((lft, rht) => lft.ingredients[0].localeCompare(rht.ingredients[0]));
   return ret;
 };
 
@@ -527,15 +532,16 @@ export const FireballView = (
   const [ingredientList, setIngredientList] = React.useState<Array<any>>([]);
   const [dishIngredients, setIngredients] = React.useState<Array<OnChainIngredient>>([]);
   const [changeList, setChangeList] = React.useState<Array<any>>([]);
-  const [matchingIndices, setMatchingIndices] = React.useState<{ [key: string]: number }>({});
+
+  // ingredient => mint
+  const [selectedMints, setMatchingIndices] = React.useState<{ [key: string]: PublicKey }>({});
 
   const numIngredients = Object.keys(ingredients).length;
-  const collected = Object.keys(ingredients).reduce((acc, ingredient) => {
-    return acc + +!!(
-      dishIngredients.find(c => c.ingredient === ingredient)
-      || relevantMints.find(c => c.ingredient === ingredient)
-    );
-  }, 0);
+  const reduceIngredient = (acc: number, relevant: RelevantMint) => {
+      return acc + +!!(relevant.ingredients.find(i => ingredients.hasOwnProperty(i)));
+  };
+  const collected = relevantMints.reduce(reduceIngredient, 0)
+    + dishIngredients.reduce(reduceIngredient, 0);
 
   const { loading, setLoading } = useLoading();
 
@@ -613,7 +619,7 @@ export const FireballView = (
       e.preventDefault();
     }
 
-    if (dishIngredients.find(c => c.ingredient === ingredient)) {
+    if (dishIngredients.find(c => c.ingredients.find(i => i === ingredient))) {
       throw new Error(`Ingredient ${ingredient} has already been added to this dish`);
     }
 
@@ -653,7 +659,7 @@ export const FireballView = (
       e.preventDefault();
     }
 
-    const mint = dishIngredients.find(c => c.ingredient === ingredient);
+    const mint = dishIngredients.find(c => c.ingredients.find(i => i === ingredient));
     if (!mint) {
       throw new Error(`Ingredient ${ingredient} is not part of this dish`);
     }
@@ -1122,18 +1128,20 @@ export const FireballView = (
   const batchChangeWrapper = (
     inBatch : boolean,
     r : RelevantMint,
+    ingredient : string,
     operation : IngredientView,
   ) => {
     return e => {
       setLoading(true);
       const wrap = async () => {
+        console.log(inBatch, r, ingredient, operation);
         try {
           if (inBatch) {
-            await cancelChangeForIngredient(e, r.ingredient);
+            await cancelChangeForIngredient(e, ingredient);
           } else if (operation === 'add') {
-            await addIngredient(e, r.ingredient, r.mint);
+            await addIngredient(e, ingredient, r.mint);
           } else if (operation === 'recover') {
-            await recoverIngredient(e, r.ingredient);
+            await recoverIngredient(e, ingredient);
           } else {
             // TODO: error earlier...
             throw new Error(`Unknown operation ${operation}`);
@@ -1187,22 +1195,30 @@ export const FireballView = (
       setLoading(true);
       const wrap = async () => {
         try {
+          const dedupMints = [...relevantMints];
           const newIngredients = Object.keys(ingredients).reduce(
             (acc, ingredient) => {
-              if (dishIngredients.find(c => c.ingredient === ingredient)) {
+              if (dishIngredients.find(c => c.ingredients.find(i => i === ingredient))) {
                 return acc;
               }
-              const matchingIngredients = relevantMints.filter(
-                  c => c.ingredient === ingredient);
-              if (matchingIngredients.length === 0) {
-                throw new Error(`You don't have ingredient ${ingredient}`);
+
+              const selectedMint = selectedMints[ingredient];
+              let m: RelevantMint;
+              if (selectedMint) {
+                const selected = dedupMints.find(s => s.mint.equals(selectedMint));
+                if (!selected) {
+                  throw new Error(`You don't have ingredient ${ingredient}`);
+                }
+                m = selected;
+              } else {
+                const matchingIngredients = dedupMints.filter(
+                    c => c.ingredients.find(i => i === ingredient));
+                if (matchingIngredients.length === 0) {
+                  throw new Error(`You don't have ingredient ${ingredient}`);
+                }
+                m = matchingIngredients[0];
               }
-              let index = matchingIndices[ingredient] || 0;
-              if (index >= matchingIngredients.length) {
-                console.warn(`Bad index ${index} of ${matchingIngredients.length} for ${ingredient}`);
-                index = 0;
-              }
-              const m = matchingIngredients[index];
+              dedupMints.splice(dedupMints.findIndex(s => s.mint.equals(m.mint)), 1);
               return {
                 ...acc,
                 [ingredient]: {
@@ -1449,27 +1465,40 @@ export const FireballView = (
         }}
       >
         {Object.keys(ingredients).map((ingredient, idx) => {
-          const dishIngredient = dishIngredients.find(c => c.ingredient === ingredient);
-          const matchingIngredients = relevantMints.filter(c => c.ingredient === ingredient);
+          const dishIngredient = dishIngredients.find(c => c.ingredients.find(i => i === ingredient));
+          const selectedMint = selectedMints[ingredient];
+          const matchingIngredients = relevantMints.filter(
+            c => {
+              // not selected by another mint (or this one)
+              return !Object.values(selectedMints).find(m => m.equals(c.mint))
+              // and matches the ingredient
+              && c.ingredients.find(i => i === ingredient);
+            });
 
-          let imgStyle, disabled;
-          if (dishIngredient || matchingIngredients.length > 0) {
+          console.log(ingredient, idx, selectedMint, selectedMints, matchingIngredients, relevantMints);
+
+          let imgStyle: React.CSSProperties;
+          if (dishIngredient || selectedMint || matchingIngredients.length > 0) {
             imgStyle = {}
-            disabled = false;
           } else {
             imgStyle = { filter: "grayscale(100%)", };
-            disabled = true;
           }
 
-          let index = matchingIndices[ingredient] || 0;
-          if (matchingIngredients.length > 0 && index >= matchingIngredients.length) {
-            console.warn(`Bad index ${index} of ${matchingIngredients.length} for ${ingredient}`);
-            index = 0;
+          let displayMint: RelevantMint | null;
+          let operation: IngredientView;
+          if (dishIngredient) {
+            displayMint = dishIngredient;
+            operation = IngredientView.recover;
+          } else if (selectedMint) {
+            displayMint = relevantMints.find(c => c.mint.equals(selectedMint)) || null;
+            operation = IngredientView.add;
+          } else {
+            displayMint = matchingIngredients[0];
+            operation = IngredientView.add;
           }
-          const r = dishIngredient ? dishIngredient : matchingIngredients[index];
-          const operation = dishIngredient ? IngredientView.recover: IngredientView.add;
+
           const inBatch = changeList.find(
-              c => r && c.mint.equals(r.mint) && c.operation === operation);
+              c => displayMint && c.mint.equals(displayMint.mint) && c.ingredient === ingredient && c.operation === operation);
           return (
             <div
               key={idx}
@@ -1501,10 +1530,10 @@ export const FireballView = (
                     </div>
                   )}
                   subtitle={
-                    r
+                    displayMint
                       ? (
                         <div>
-                          {explorerLinkForAddress(r.mint)}
+                          {explorerLinkForAddress(displayMint.mint)}
                           {"\u00A0"}
                           {dishIngredient && (
                             <Tooltip
@@ -1530,14 +1559,13 @@ export const FireballView = (
                         <React.Fragment>
                           <IconButton
                             style={{
-                              color: index == 0 ? "gray" : "white",
+                              color: matchingIngredients.length === 0 ? "gray" : "white",
                             }}
-                            disabled={index == 0}
+                            disabled={matchingIngredients.length === 0}
                             onClick={() => {
-                              const nextIndex = index - 1;
                               setMatchingIndices({
-                                ...matchingIndices,
-                                [ingredient]: nextIndex,
+                                ...selectedMints,
+                                [ingredient]: matchingIngredients[0].mint,
                               });
                             }}
                           >
@@ -1545,14 +1573,13 @@ export const FireballView = (
                           </IconButton>
                           <IconButton
                             style={{
-                              color: index == matchingIngredients.length - 1 ? "gray" : "white",
+                              color: matchingIngredients.length === 0 ? "gray" : "white",
                             }}
-                            disabled={index == matchingIngredients.length - 1}
+                            disabled={matchingIngredients.length === 0}
                             onClick={() => {
-                              const nextIndex = index + 1;
                               setMatchingIndices({
-                                ...matchingIndices,
-                                [ingredient]: nextIndex,
+                                ...selectedMints,
+                                [ingredient]: matchingIngredients[0].mint,
                               });
                             }}
                           >
@@ -1562,10 +1589,10 @@ export const FireballView = (
                       )}
                       <IconButton
                         style={{
-                          color: disabled ? "gray" : "white",
+                          color: !displayMint ? "gray" : "white",
                         }}
-                        disabled={disabled}
-                        onClick={batchChangeWrapper(inBatch, r, operation)}
+                        disabled={!displayMint}
+                        onClick={batchChangeWrapper(inBatch, displayMint as RelevantMint, ingredient, operation)}
                       >
                         {!inBatch ? (operation == IngredientView.add ? <AddIcon /> : <RemoveIcon />)
                                   : <CancelIcon />}
