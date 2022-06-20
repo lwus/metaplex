@@ -175,6 +175,11 @@ type WalletIngredient = RelevantMint & {
 // TODO: add as of block height?
 type RecipeYield = MintAndImage & { remaining : number };
 
+type DedupIngredientMint = {
+  asset: React.ReactElement,
+  selected: PublicKey | null,
+};
+
 const fetchMintsAndImages = async (
   connection : RPCConnection,
   mintKeys : Array<PublicKey>
@@ -1464,15 +1469,20 @@ export const FireballView = (
           paddingTop: '20px',
         }}
       >
-        {Object.keys(ingredients).map((ingredient, idx) => {
+        {Object.keys(ingredients).reduce((acc: Array<DedupIngredientMint>, ingredient, idx): Array<DedupIngredientMint> => {
           const dishIngredient = dishIngredients.find(c => c.ingredients.find(i => i === ingredient));
+
+          const prevSelected = acc.map(v => v.selected);
+
           const selectedMint = selectedMints[ingredient];
           const matchingIngredients = relevantMints.filter(
             c => {
-              // not selected by another mint (or this one)
+              // not explicitly selected
               return !Object.values(selectedMints).find(m => m.equals(c.mint))
-              // and matches the ingredient
-              && c.ingredients.find(i => i === ingredient);
+                // or implicitly assigned to another group
+                && !prevSelected.find(m => m?.equals(c.mint))
+                // and matches the ingredient
+                && c.ingredients.find(i => i === ingredient);
             });
 
           console.log(ingredient, idx, selectedMint, selectedMints, matchingIngredients, relevantMints);
@@ -1499,7 +1509,7 @@ export const FireballView = (
 
           const inBatch = changeList.find(
               c => displayMint && c.mint.equals(displayMint.mint) && c.ingredient === ingredient && c.operation === operation);
-          return (
+          return [...acc, { asset: (
             <div
               key={idx}
               style={{
@@ -1603,8 +1613,8 @@ export const FireballView = (
                 />
               </ImageListItem>
             </div>
-          );
-        })}
+          ), selected: displayMint?.mint || null }];
+        }, []).map((v: DedupIngredientMint) => v.asset)}
       </ImageList>
     </Stack>
   );
