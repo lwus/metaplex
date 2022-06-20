@@ -106,7 +106,7 @@ programCommand('create_recipe')
     console.log(roots);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadFireballProgram(wallet, options.env);
+    const anchorProgram = await loadFireballProgram(wallet, options.env, options.rpcUrl);
 
     const setup : Array<TransactionInstruction> = [];
 
@@ -191,7 +191,7 @@ programCommand('add_master_edition')
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadFireballProgram(wallet, options.env);
+    const anchorProgram = await loadFireballProgram(wallet, options.env, options.rpcUrl);
 
     const recipeKey = new PublicKey(options.recipe);
     const mintKey = new PublicKey(options.mint);
@@ -265,7 +265,7 @@ programCommand('reclaim_master_edition')
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadFireballProgram(wallet, options.env);
+    const anchorProgram = await loadFireballProgram(wallet, options.env, options.rpcUrl);
 
     const recipeKey = new PublicKey(options.recipe);
     const mintKey = new PublicKey(options.mint);
@@ -338,7 +338,7 @@ programCommand('burn_crank')
     log.info(`Parsed options:`, options);
 
     const wallet = loadWalletKey(options.keypair);
-    const anchorProgram = await loadFireballProgram(wallet, options.env);
+    const anchorProgram = await loadFireballProgram(wallet, options.env, options.rpcUrl);
     const connection = new RPCConnection(anchor.web3.clusterApiUrl(options.env));
 
     // TODO: anchor.accountDiscriminator
