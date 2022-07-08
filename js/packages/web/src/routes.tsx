@@ -192,6 +192,15 @@ export function Routes() {
     },
   ];
 
+  const bullduckYields = [
+    {
+      image: "https://arweave.net/P4i68_4hoN1lImQa5HsIFdcuK5bf6PjjuTNjn_61ZDw",
+      glb: "https://arweave.net/64-Lc4TLJX5iyzGR9nS_JEdkDHXhQQ9CawxI8FHkRKY",
+      name: "bullduck",
+      mint: new PublicKey("73JfKJgE6sKLf2CY5QMSXSsjQWY36buq9eVAJpstjVbt"),
+    },
+  ];
+
 
   return (
     <>
@@ -268,11 +277,23 @@ export function Routes() {
                 />
               )
             } />
+            <Route path="/bullduck" component={
+              () => (
+                <FireballView
+                  recipeKey={new PublicKey("44h7CvSmWGHfXJTgtEjhxuaxbCXWG9dBUpgXq4Ume7Hs")}
+                  recipeYields={bullduckYields}
+                  ingredients={{
+                    ...ingredientSubset(['normal duck', 'house', 'bull']),
+                  }}
+                />
+              )
+            } />
             <Route path="/swap" component={SwapView} />
             <Route path="/" component={
               () => (
                 <ExploreView
                   recipeYields={[
+                    ...bullduckYields.map(c => ({ ...c, link: "/bullduck" })),
                     ...gwendolinYields.map(c => ({ ...c, link: "/gwendolin" })),
                     ...deppelinYields.map(c => ({ ...c, link: "/deppelin" })),
                     ...apeCyborgYields.map(c => ({ ...c, link: "/professorapecyborg" })),
