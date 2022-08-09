@@ -212,8 +212,8 @@ export function Routes() {
 
   const rocketwhaleYields = [
     {
-      image: "",
-      glb: "",
+      image: "https://arweave.net/HdAMxu_ffte1HLwkflHOwryTLAYcQtQ-JpBVtxYjRjg",
+      glb: "https://arweave.net/iIcFAxxia4qdyGLYL2u6LX4p-CRv7KYIQcNAq3oZPO4",
       name: "rocketwhale",
       mint: new PublicKey("HXfaPkZi4fRuAeMb5TZ8mEigDqKtNNqPwS8HrRA7a34H"),
     },
@@ -221,8 +221,8 @@ export function Routes() {
 
   const tornadoscopeYields = [
     {
-      image: "",
-      glb: "",
+      image: "https://arweave.net/EhHckKjXI-pwyK_pBIW6TdIP1-QgzHpOVZAVILT7hlw",
+      glb: "https://arweave.net/6k8xixF-WMtU9Ia4__qvjugyEwlRerLOMATj4QoQVAU",
       name: "tornadoscope",
       mint: new PublicKey("CLDBSXgGP2HZaCT7M4jzuffmScWJjnF4FzMvcCqA7drf"),
     },
