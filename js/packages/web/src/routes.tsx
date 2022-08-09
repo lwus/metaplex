@@ -201,6 +201,33 @@ export function Routes() {
     },
   ];
 
+  const donutterYields = [
+    {
+      image: "https://arweave.net/otjqC1nnZM4qDJAlYSQejBZ0tygMCah86Av0TSSZJOw",
+      glb: "https://arweave.net/4CcgqA857qY1ISr8kJKYvGfDjp9ncrxVwaFMjCjWkg0",
+      name: "donutter",
+      mint: new PublicKey("FaCwhWFPDAShn9NuFvNSWDJ2jf9CQmVSp1CCYjf1FATi"),
+    },
+  ];
+
+  const rocketwhaleYields = [
+    {
+      image: "",
+      glb: "",
+      name: "rocketwhale",
+      mint: new PublicKey("HXfaPkZi4fRuAeMb5TZ8mEigDqKtNNqPwS8HrRA7a34H"),
+    },
+  ];
+
+  const tornadoscopeYields = [
+    {
+      image: "",
+      glb: "",
+      name: "tornadoscope",
+      mint: new PublicKey("CLDBSXgGP2HZaCT7M4jzuffmScWJjnF4FzMvcCqA7drf"),
+    },
+  ];
+
 
   return (
     <>
@@ -288,11 +315,47 @@ export function Routes() {
                 />
               )
             } />
+            <Route path="/donutter" component={
+              () => (
+                <FireballView
+                  recipeKey={PublicKey.default}
+                  recipeYields={donutterYields}
+                  ingredients={{
+                    ...ingredientSubset(['airplane', 'duck with doughnut']),
+                  }}
+                />
+              )
+            } />
+            <Route path="/rocketwhale" component={
+              () => (
+                <FireballView
+                  recipeKey={PublicKey.default}
+                  recipeYields={rocketwhaleYields}
+                  ingredients={{
+                    ...ingredientSubset(['rocket', 'whale', 'normal duck']),
+                  }}
+                />
+              )
+            } />
+            <Route path="/tornadoscope" component={
+              () => (
+                <FireballView
+                  recipeKey={PublicKey.default}
+                  recipeYields={tornadoscopeYields}
+                  ingredients={{
+                    ...ingredientSubset(['house', 'telescope ape']),
+                  }}
+                />
+              )
+            } />
             <Route path="/swap" component={SwapView} />
             <Route path="/" component={
               () => (
                 <ExploreView
                   recipeYields={[
+                    ...tornadoscopeYields.map(c => ({ ...c, link: "/tornadoscope" })),
+                    ...rocketwhaleYields.map(c => ({ ...c, link: "/rocketwhale" })),
+                    ...donutterYields.map(c => ({ ...c, link: "/donutter" })),
                     ...bullduckYields.map(c => ({ ...c, link: "/bullduck" })),
                     ...gwendolinYields.map(c => ({ ...c, link: "/gwendolin" })),
                     ...deppelinYields.map(c => ({ ...c, link: "/deppelin" })),
