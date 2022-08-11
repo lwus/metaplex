@@ -318,7 +318,7 @@ export function Routes() {
             <Route path="/donutter" component={
               () => (
                 <FireballView
-                  recipeKey={PublicKey.default}
+                  recipeKey={new PublicKey("5J6ajtkstkvHQ64M8ffSwSuLbTHEASB9ebDQ6UDAjHr")}
                   recipeYields={donutterYields}
                   ingredients={{
                     ...ingredientSubset(['airplane', 'duck with doughnut']),
@@ -329,7 +329,7 @@ export function Routes() {
             <Route path="/rocketwhale" component={
               () => (
                 <FireballView
-                  recipeKey={PublicKey.default}
+                  recipeKey={new PublicKey("AwiabBEMdAdT7ppCfYgc2EkMWf8X3kErNVJztTme2MbJ")}
                   recipeYields={rocketwhaleYields}
                   ingredients={{
                     ...ingredientSubset(['rocket', 'whale', 'normal duck']),
@@ -340,7 +340,7 @@ export function Routes() {
             <Route path="/tornadoscope" component={
               () => (
                 <FireballView
-                  recipeKey={PublicKey.default}
+                  recipeKey={new PublicKey("7bFzU891dg7UsvRpwCYQ5Wxf7Vtgo2AM7buKphmA7T2K")}
                   recipeYields={tornadoscopeYields}
                   ingredients={{
                     ...ingredientSubset(['house', 'telescope ape']),
